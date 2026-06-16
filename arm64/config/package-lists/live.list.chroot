@@ -2,5 +2,9 @@ live-boot
 live-config
 live-config-systemd
 systemd-sysv
-
-
+live-tools
+user-modesetting
+sudo
+eject
+wpasupplicant
+network-manager
