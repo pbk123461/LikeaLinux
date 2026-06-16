@@ -24,4 +24,5 @@ lb config \
 --swap-file-size 4096 \
 --system live \
 --bootappend-live "quiet splash" \
---hdd-label "Dojima" 
+--hdd-label "Dojima" \
+--build-with-chroot true
