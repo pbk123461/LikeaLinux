@@ -8,8 +8,6 @@ lb config \
 --mirror-bootstrap https://deb.debian.org/debian/ \
 --initsystem systemd \
 --image-name LIKEALINUX_Kiryu \
---memtest none \
---uefi-secure-boot auto \
 --updates true \
 --firmware-chroot true \
 --linux-flavours "arm64" \
