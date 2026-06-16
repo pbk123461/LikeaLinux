@@ -6,7 +6,6 @@ lb config \
 --mirror-chroot-security https://security.debian.org/debian-security/ \
 --mirror-binary https://deb.debian.org/debian/ \
 --mirror-bootstrap https://deb.debian.org/debian/ \
---initsystem systemd \
 --image-name LIKEALINUX_0 \
 --memtest memtest86+ \
 --uefi-secure-boot auto \
@@ -15,14 +14,13 @@ lb config \
 --linux-flavours "amd64" \
 --archive-areas "main contrib non-free" \
 --archive-areas "main contrib non-free non-free-firmware" \
---bootloaders "grub-efi" \
 --uefi-secure-boot auto \
 --iso-application "KazumaKiryu" \
 --iso-publisher "pbk123461" \
---iso-volume "LIKEALINUX_0"\
+--iso-volume "LIKEALINUX_0_Kiryu_amd64"\
 --binary-images iso-hybrid \
 --swap-file-size 4096 \
 --system live \
---bootappend-live "quiet splash" \
+--bootappend-live "boot=live componets quiet splash" \
 --hdd-label "Dojima" \
 --build-with-chroot true
