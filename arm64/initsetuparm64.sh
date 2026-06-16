@@ -1,0 +1,24 @@
+lb config \
+--distribution trixie \
+-a arm64 \
+--apt-recommends true \
+--chroot-squashfs-compression-type zstd \
+--mirror-chroot-security https://security.debian.org/debian-security/ \
+--mirror-binary https://deb.debian.org/debian/ \
+--mirror-bootstrap https://deb.debian.org/debian/ \
+--initsystem systemd \
+--image-name LIKEALINUX_Kiryu \
+--memtest none \
+--uefi-secure-boot auto \
+--updates true \
+--firmware-chroot true \
+--linux-flavours "arm64" \
+--archive-areas "main contrib non-free non-free-firmware" \
+--iso-application "KazumaKiryu" \
+--iso-publisher "pbk123461" \
+--iso-volume "LIKEALINUX_0" \
+--binary-images iso-hybrid \
+--system live \
+--bootappend-live "quiet splash" \
+--hdd-label "Dojima" \
+--build-with-chroot true
