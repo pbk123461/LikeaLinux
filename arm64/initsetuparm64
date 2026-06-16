@@ -1,6 +1,6 @@
 lb config \
 --distribution trixie \
--a amd64 \
+-a arm64 \
 --apt-recommends true \
 --chroot-squashfs-compression-type zstd \
 --mirror-chroot-security https://security.debian.org/debian-security/ \
@@ -12,11 +12,9 @@ lb config \
 --uefi-secure-boot auto \
 --updates true \
 --firmware-chroot true \
---linux-flavours "amd64" \
+--linux-flavours "arm64" \
 --archive-areas "main contrib non-free" \
 --archive-areas "main contrib non-free non-free-firmware" \
---bootloaders "grub-efi" \
---uefi-secure-boot auto \
 --iso-application "KazumaKiryu" \
 --iso-publisher "pbk123461" \
 --iso-volume "LIKEALINUX_0"\
