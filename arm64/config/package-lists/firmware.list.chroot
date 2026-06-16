@@ -6,6 +6,6 @@ firmware-iwlwifi
 firmware-realtek
 open-vm-tools
 firmware-amd-graphics
-amd64-microcode
-intel-microcode
+arm64-microcode
+arm-trusted-firmware
 fwupd
