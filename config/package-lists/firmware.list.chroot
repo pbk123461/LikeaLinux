@@ -1,1 +1,10 @@
 gnome-firmware
+firmware-linux
+firmware-linux-free
+firmware-linux-nonfree
+firmware-iwlwifi
+firmware-realtek
+open-vm-tools
+firmware-amd-graphics
+amd64-microcode
+intel-microcode
