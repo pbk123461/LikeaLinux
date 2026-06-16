@@ -2,8 +2,7 @@ lb config \
 --distribution trixie \
 -a amd64 \
 --apt-recommends true \
---compression zstd \
---config https://github.com/pbk123461/LikeaLinux.git::master \
+--chroot-squashfs-compression-type zstd \
 --mirror-chroot-security https://security.debian.org/debian-security/ \
 --mirror-binary https://deb.debian.org/debian/ \
 --mirror-bootstrap https://deb.debian.org/debian/ \
