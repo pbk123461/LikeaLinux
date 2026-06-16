@@ -6,7 +6,6 @@ lb config \
 --mirror-chroot-security https://security.debian.org/debian-security/ \
 --mirror-binary https://deb.debian.org/debian/ \
 --mirror-bootstrap https://deb.debian.org/debian/ \
---initsystem systemd \
 --image-name LIKEALINUX_Kiryu \
 --updates true \
 --firmware-chroot true \
@@ -17,6 +16,6 @@ lb config \
 --iso-volume "LIKEALINUX_0" \
 --binary-images iso-hybrid \
 --system live \
---bootappend-live "quiet splash" \
+--bootappend-live "boot=live componets quiet splash" \
 --hdd-label "Dojima" \
 --build-with-chroot true
