@@ -17,5 +17,5 @@ lb config \
 --binary-images iso-hybrid \
 --system live \
 --bootappend-live "boot=live componets quiet splash" \
---hdd-label "Dojima HQ" \
+--hdd-label "DojimaHQ" \
 --build-with-chroot true
