@@ -13,9 +13,9 @@ lb config \
 --archive-areas "main contrib non-free non-free-firmware" \
 --iso-application "KazumaKiryu" \
 --iso-publisher "pbk123461" \
---iso-volume "LIKEALINUX_0" \
+--iso-volume "LIKEALINUX0" \
 --binary-images iso-hybrid \
 --system live \
 --bootappend-live "boot=live componets quiet splash" \
---hdd-label "Dojima" \
+--hdd-label "Dojima HQ" \
 --build-with-chroot true

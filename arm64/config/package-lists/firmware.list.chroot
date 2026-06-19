@@ -7,3 +7,6 @@ open-vm-tools
 firmware-amd-graphics
 arm-trusted-firmware
 fwupd
+qemu-guest-agent
+plymouth
+plymouth-themes
