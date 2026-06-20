@@ -1,2 +1,6 @@
 flatpak
 build-essential
+git
+yad
+wget
+curl
