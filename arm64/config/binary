@@ -62,7 +62,7 @@ LB_DEBIAN_INSTALLER_PRESEEDFILE=""
 LB_DEBIAN_INSTALLER_GUI="true"
 
 # Set hdd label
-LB_HDD_LABEL="Dojima"
+LB_HDD_LABEL="DojimaHQ"
 
 # Set hdd filesystem size
 LB_HDD_SIZE="auto"
@@ -80,7 +80,7 @@ LB_ISO_PREPARER="live-build @LB_VERSION@; https://salsa.debian.org/live-team/liv
 LB_ISO_PUBLISHER="pbk123461"
 
 # Set iso volume (max 32 chars)
-LB_ISO_VOLUME="LIKEALINUX_0"
+LB_ISO_VOLUME="LIKEALINUX0"
 
 # Set jffs2 eraseblock size
 LB_JFFS2_ERASEBLOCK=""
