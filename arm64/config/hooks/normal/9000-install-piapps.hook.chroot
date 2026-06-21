@@ -1,5 +1,0 @@
-#!/bin/sh
-set -e
-
-git clone --depth=1 https://github.com/Botspot/pi-apps /etc/pi-apps
-/etc/pi-apps/install --no-gui
