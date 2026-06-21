@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+dpkg --add-architecture amd64 || true
+dpkg --add-architecture i386 || true
+apt update
+
+export HOME=/root
+curl --silent https://raw.githubusercontent.com/FEX-Emu/FEX/main/Scripts/InstallFEX.py | python3
