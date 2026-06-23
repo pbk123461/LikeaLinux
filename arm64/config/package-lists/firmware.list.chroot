@@ -10,3 +10,5 @@ fwupd
 qemu-guest-agent
 plymouth
 plymouth-themes
+mesa-vulkan-drivers
+xserver-xorg-video-all
