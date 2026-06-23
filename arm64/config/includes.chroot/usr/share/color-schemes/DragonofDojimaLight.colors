@@ -29,9 +29,9 @@ IntensityEffect=0
 [Colors:Button]
 BackgroundAlternate=163,212,250
 BackgroundNormal=252,252,252
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=112,125,138
 ForegroundLink=41,128,185
 ForegroundNegative=218,68,83
@@ -43,9 +43,9 @@ ForegroundVisited=155,89,182
 [Colors:Complementary]
 BackgroundAlternate=27,30,32
 BackgroundNormal=42,46,50
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=161,169,177
 ForegroundLink=29,153,243
 ForegroundNegative=218,68,83
@@ -55,11 +55,11 @@ ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [Colors:Header]
-BackgroundAlternate=239,240,241
-BackgroundNormal=222,224,226
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+BackgroundAlternate=148,15,14
+BackgroundNormal=148,15,14
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=112,125,138
 ForegroundLink=41,128,185
 ForegroundNegative=218,68,83
@@ -69,11 +69,11 @@ ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [Colors:Header][Inactive]
-BackgroundAlternate=227,229,231
-BackgroundNormal=239,240,241
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+BackgroundAlternate=75,8,7
+BackgroundNormal=75,8,7
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=112,125,138
 ForegroundLink=41,128,185
 ForegroundNegative=218,68,83
@@ -84,9 +84,9 @@ ForegroundVisited=155,89,182
 
 [Colors:Selection]
 BackgroundAlternate=163,212,250
-BackgroundNormal=61,174,233
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
+BackgroundNormal=148,15,14
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
 ForegroundActive=255,255,255
 ForegroundInactive=112,125,138
 ForegroundLink=253,188,75
@@ -99,9 +99,9 @@ ForegroundVisited=155,89,182
 [Colors:Tooltip]
 BackgroundAlternate=239,240,241
 BackgroundNormal=247,247,247
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=112,125,138
 ForegroundLink=41,128,185
 ForegroundNegative=218,68,83
@@ -113,9 +113,9 @@ ForegroundVisited=155,89,182
 [Colors:View]
 BackgroundAlternate=247,247,247
 BackgroundNormal=255,255,255
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=112,125,138
 ForegroundLink=41,128,185
 ForegroundNegative=218,68,83
@@ -127,9 +127,9 @@ ForegroundVisited=155,89,182
 [Colors:Window]
 BackgroundAlternate=227,229,231
 BackgroundNormal=239,240,241
-DecorationFocus=61,174,233
-DecorationHover=61,174,233
-ForegroundActive=61,174,233
+DecorationFocus=148,15,14
+DecorationHover=148,15,14
+ForegroundActive=148,15,14
 ForegroundInactive=112,125,138
 ForegroundLink=41,128,185
 ForegroundNegative=218,68,83
@@ -139,8 +139,8 @@ ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [General]
-ColorScheme=BreezeLight
-Name=Breeze Light
+ColorScheme=DragonofDojimaLight
+Name=DragonofDojimaLight
 Name[ar]=نسيم فاتح
 Name[az]=Breeze - İşıqlı
 Name[bg]=Breeze Светъл
@@ -172,7 +172,7 @@ Name[lt]=Breeze šviesus
 Name[lv]=Breeze Light
 Name[nl]=Breeze Light
 Name[nn]=Breeze lys
-Name[pa]=ਬਰੀਜ਼ ਹਲਕਾ
+Name[pa]=ਬਰੀਜ਼ ਹਲਕਾ
 Name[pl]=Jasna Bryza
 Name[pt]=Brisa Clara
 Name[pt_BR]=Breeze Light
