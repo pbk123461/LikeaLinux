@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+export ZSH=/etc/skel/.oh-my-zsh
+export HOME=/etc/skel
+
+sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)" "" --unattended
+
+if [ -f /etc/skel/.oh-my-zsh/templates/zshrc.zsh-template ]; then
+    cp /etc/skel/.oh-my-zsh/templates/zshrc.zsh-template /etc/skel/.zshrc
+fi
+
+chsh $(which zsh) || true

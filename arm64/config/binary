@@ -113,7 +113,7 @@ LB_FIRMWARE_CHROOT="true"
 LB_SWAP_FILE_PATH=""
 
 # Set swap file size
-LB_SWAP_FILE_SIZE="512"
+LB_SWAP_FILE_SIZE="2048"
 
 # Enable/disable UEFI secure boot support
 LB_UEFI_SECURE_BOOT="auto"

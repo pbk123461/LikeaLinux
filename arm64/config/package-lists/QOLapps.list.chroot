@@ -13,3 +13,4 @@ pipx
 fzf
 ca-certificates
 libgl1-mesa-dri
+zsh

@@ -15,55 +15,34 @@
     }
   },
   "modules": [
+    "title",
+    "separator",
+    "os",
+    "host",
+    "kernel",
+    "uptime",
+    "packages",
+    "shell",
+    "display",
+    "de",
+    "wm",
+    "wmtheme",
+    "theme",
+    "icons",
+    "font",
+    "cursor",
+    "terminal",
+    "terminalfont",
+    "cpu",
+    "gpu",
+    "memory",
+    "swap",
+    "disk",
+    "localip",
+    "battery",
+    "poweradapter",
+    "locale",
     "break",
-    "break",
-    {
-      "type": "title",
-      "format": " {6}{7}{8}",
-      "color": {
-        "user": "32",
-        "at": "37",
-        "host": "35"
-      }
-    },
-    {
-      "type": "os",
-      "key": " 󰻀 OS ",
-      "keyColor": "31"
-    },
-    {
-      "type": "kernel",
-      "key": " 󰒄 KER",
-      "keyColor": "32"
-    },
-    {
-      "type": "packages",
-      "key": " 󰏖 PKG",
-      "keyColor": "33"
-    },
-    {
-      "type": "shell",
-      "key": " 󱆃 SH ",
-      "keyColor": "34"
-    },
-    {
-      "type": "terminal",
-      "key": " 󰆍 TER",
-      "keyColor": "35"
-    },
-    {
-      "type": "wm",
-      "key": " 󱂬 WM ",
-      "keyColor": "36"
-    },
-    {
-      "type": "colors",
-      "symbol": "square",
-      "paddingLeft": 1,
-      "block": {
-        "range": [1, 6]
-      }
-    },
-    "break"
+    "colors"
   ]
 }

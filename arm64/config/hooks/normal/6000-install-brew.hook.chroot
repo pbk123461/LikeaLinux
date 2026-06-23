@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    procps \
+    file \
+    ca-certificates
+
+useradd -m -s /bin/bash brewtmp
+
+mkdir -p /home/linuxbrew/.linuxbrew
+chown -R brewtmp:brewtmp /home/linuxbrew
+
+runuser -u brewtmp -- env NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+userdel -r brewtmp
+
+chown -R 1000:1000 /home/linuxbrew
+
+cat << 'EOF' > /etc/profile.d/homebrew.sh
+if [ -d "/home/linuxbrew/.linuxbrew" ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+EOF
+
+chmod +x /etc/profile.d/homebrew.sh
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
