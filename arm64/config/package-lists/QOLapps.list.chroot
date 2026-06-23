@@ -11,3 +11,5 @@ gnupg
 zenity
 pipx
 fzf
+ca-certificates
+libgl1-mesa-dri
