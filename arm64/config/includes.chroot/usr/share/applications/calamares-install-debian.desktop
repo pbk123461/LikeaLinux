@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install LikeALinux Kiryu
+GenericName=Calamares Installer
+Exec=calamares-install-debian
+Comment=Calamares — Installer for LikeALinux Kiryu Live
+Keywords=calamares;system;install;LAL;LikeALinux;Kiryu;installer
+Icon=install-debian
+Terminal=false
+Categories=Qt;System;
+StartupWMClass=calamares
+StartupNotify=True
