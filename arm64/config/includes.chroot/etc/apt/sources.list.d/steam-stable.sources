@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://repo.steampowered.com/steam/
+Suites: stable
+Components: steam
+Signed-By: /usr/share/keyrings/steam.gpg
