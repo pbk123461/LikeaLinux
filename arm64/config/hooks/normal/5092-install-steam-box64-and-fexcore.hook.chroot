@@ -5,6 +5,9 @@ apt-get update
 
 export DEBIAN_FRONTEND=noninteractive
 
+wget -O /tmp/steam-keyring.deb https://repo.steampowered.com/steam/archive/stable/steam-launcher-keyring_latest_all.deb
+apt-get install /tmp/steam-keyring.deb -y
+
 wget https://repo.steampowered.com/steam/archive/stable/steam-launcher_latest_all.deb
 apt install ./steam-launcher_latest_all.deb -y
 rm -rf ./steam-launcher_latest_all.deb
@@ -20,5 +23,13 @@ libbz2-1.0:armhf libxtst6:armhf libsm6:armhf libice6:armhf libgl1:armhf \
 libxinerama1:armhf libxdamage1:armhf libibus-1.0-5 libncurses6:armhf \
 libgl1-mesa-dri libgl1-mesa-dri:armhf libglu1-mesa libglu1-mesa:armhf \
 libvulkan1 libvulkan1:armhf libcurl4t64 libcurl4t64:armhf -y
+
+apt-get install --fix-broken -y
+
+apt-get install -y \
+    libgl1-mesa-dri:i386 \
+    libgl1:i386 \
+    libvulkan1:i386 \
+    vulkan-tools
 
 apt-get install --fix-broken -y
