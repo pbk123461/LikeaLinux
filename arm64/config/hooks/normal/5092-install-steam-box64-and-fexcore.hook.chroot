@@ -1,40 +1,53 @@
 #!/bin/sh
 set -e
+
 dpkg --add-architecture amd64
 dpkg --add-architecture i386
+dpkg --add-architecture armhf
+
 apt-get update
 
 export DEBIAN_FRONTEND=noninteractive
 
-
-wget https://repo.steampowered.com/steam/archive/beta/steam-launcher_latest-beta_all.deb
-apt install ./steam-launcher_latest-beta_all.deb -y
-rm -rf ./steam-launcher_latest-beta_all.deb
-apt-get install --fix-broken -y
-
-apt-get update
-
 apt-get install -y \
-libgl1-mesa-dri:amd64 \
-libgl1-mesa-dri:i386 \
-
-apt install libc6:arm64 libegl1:arm64 libgbm1:arm64 libgl1-mesa-dri:arm64 libgl1:arm64 -y
-
-
-apt install libc6:armhf libsdl2-2.0-0:armhf libsdl2-image-2.0-0:armhf \
-libsdl2-mixer-2.0-0:armhf libsdl2-ttf-2.0-0:armhf libopenal1:armhf \
-libpng16-16t64:armhf libfontconfig1:armhf libxcomposite1:armhf \
-libbz2-1.0:armhf libxtst6:armhf libsm6:armhf libice6:armhf libgl1:armhf \
-libxinerama1:armhf libxdamage1:armhf libibus-1.0-5 libncurses6:armhf \
-libgl1-mesa-dri libgl1-mesa-dri:armhf libglu1-mesa libglu1-mesa:armhf \
-libvulkan1 libvulkan1:armhf libcurl4t64 libcurl4t64:armhf -y
-
-apt-get install --fix-broken -y
-
-apt-get install -y \
+    libc6:arm64 \
+    libegl1:arm64 \
+    libgbm1:arm64 \
+    libgl1:arm64 \
+    libgl1-mesa-dri:arm64 \
+    libgl1-mesa-dri \
+    libglu1-mesa \
+    libvulkan1 \
+    libibus-1.0-5 \
+    libc6:armhf \
+    libsdl2-2.0-0:armhf \
+    libsdl2-image-2.0-0:armhf \
+    libsdl2-mixer-2.0-0:armhf \
+    libsdl2-ttf-2.0-0:armhf \
+    libopenal1:armhf \
+    libpng16-16t64:armhf \
+    libfontconfig1:armhf \
+    libxcomposite1:armhf \
+    libbz2-1.0:armhf \
+    libxtst6:armhf \
+    libsm6:armhf \
+    libice6:armhf \
+    libgl1:armhf \
+    libxinerama1:armhf \
+    libxdamage1:armhf \
+    libncurses6:armhf \
+    libgl1-mesa-dri:armhf \
+    libglu1-mesa:armhf \
+    libvulkan1:armhf \
+    libcurl4t64:armhf \
+    libgl1-mesa-dri:amd64 \
     libgl1-mesa-dri:i386 \
     libgl1:i386 \
     libvulkan1:i386 \
     vulkan-tools
+
+wget https://repo.steampowered.com/steam/archive/beta/steam-launcher_latest-beta_all.deb
+apt-get install ./steam-launcher_latest-beta_all.deb -y
+rm -f ./steam-launcher_latest-beta_all.deb
 
 apt-get install --fix-broken -y
