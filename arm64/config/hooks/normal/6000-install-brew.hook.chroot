@@ -29,4 +29,12 @@ EOF
 
 chmod +x /etc/profile.d/homebrew.sh
 
+echo >> /etc/skel/.bashrc
+echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"' >> /etc/skel/.bashrc
+echo >> /etc/skel/.zshrc
+echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"' >> /etc/skel/.zshrc
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+source ~/.zshrc
+source ~/.bashrc
