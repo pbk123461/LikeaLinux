@@ -1,0 +1,1 @@
+apt install linux-headers-$(uname -r) v4l2loopback-dkms

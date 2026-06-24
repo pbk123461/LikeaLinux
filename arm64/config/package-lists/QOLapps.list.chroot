@@ -14,3 +14,5 @@ fzf
 ca-certificates
 libgl1-mesa-dri
 zsh
+snap
+snapd
