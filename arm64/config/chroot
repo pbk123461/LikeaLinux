@@ -35,6 +35,3 @@ LB_BACKPORTS="true"
 
 # Enable proposed updates
 LB_PROPOSED_UPDATES="false"
-
-# Enable foreign architectures for STEAMMMMM support
-LB_FOREIGN_ARCHITECTURES="armhf amd64 i386"
