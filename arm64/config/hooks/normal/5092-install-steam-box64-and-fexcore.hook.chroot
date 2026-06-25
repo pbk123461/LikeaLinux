@@ -54,36 +54,8 @@ STEAM_TARGET="/usr/local/share/Steam"
 mkdir -p "${STEAM_TARGET}/package"
 
 cd /tmp
-wget -O bins_linuxarm64.zip https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.0f11199e9a58a0ec4aab3833152ada1b2e56c846
-unzip bins_linuxarm64.zip -d "${STEAM_TARGET}"
-rm -f bins_linuxarm64.zip
+git clone https://github.com/SildurFX/Switchdeck.git
+cd Switchdeck
+chmod +x install-steam.sh
+./install-steam.sh 
 
-echo "publicbeta" > "${STEAM_TARGET}/package/beta"
-chmod -R 755 "${STEAM_TARGET}/steamrtarm64/"
-
-if [ -f /usr/lib/aarch64-linux-gnu/libvpx.so.9 ]; then
-    ln -sf /usr/lib/aarch64-linux-gnu/libvpx.so.9 /usr/lib/aarch64-linux-gnu/libvpx.so.6
-elif [ -f /usr/lib/aarch64-linux-gnu/libvpx.so.7 ]; then
-    ln -sf /usr/lib/aarch64-linux-gnu/libvpx.so.7 /usr/lib/aarch64-linux-gnu/libvpx.so.6
-fi
-
-cat << 'EOF' > /usr/local/bin/steam-arm64
-#!/bin/bash
-
-USER_STEAM_DIR="${HOME}/.local/share/Steam"
-USER_STEAM_DOT="${HOME}/.steam"
-
-if [ ! -d "${USER_STEAM_DIR}/steamrtarm64" ]; then
-    mkdir -p "${USER_STEAM_DIR}"
-    cp -r /usr/local/share/Steam/* "${USER_STEAM_DIR}/"
-    
-    mkdir -p "${USER_STEAM_DOT}"
-    ln -sf "${USER_STEAM_DIR}" "${USER_STEAM_DOT}/steam"
-    ln -sf "${USER_STEAM_DIR}" "${USER_STEAM_DOT}/root"
-    ln -sf "${USER_STEAM_DIR}/linuxarm64" "${USER_STEAM_DOT}/sdkarm64"
-fi
-
-exec "${USER_STEAM_DIR}/steamrtarm64/steam" "$@"
-EOF
-
-chmod +x /usr/local/bin/steam-arm64
