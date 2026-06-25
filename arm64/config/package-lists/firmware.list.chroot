@@ -12,3 +12,13 @@ plymouth
 plymouth-themes
 mesa-vulkan-drivers
 xserver-xorg-video-all
+firmware-brcm80211
+firmware-atheros
+mesa-va-drivers
+firmware-qcom-soc
+linux-image-arm64
+linux-headers-arm64
+dkms
+nvidia-driver
+nvidia-kernel-dkms
+firmware-misc-nonfree
