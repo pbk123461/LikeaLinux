@@ -1,1 +1,3 @@
+
+set -e
 apt install linux-headers-$(uname -r) v4l2loopback-dkms -y
