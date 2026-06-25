@@ -6,4 +6,4 @@ wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists
 
 apt update
 
-apt install --install-recommends winehq-stable
+apt install -y --install-recommends winehq-stable
