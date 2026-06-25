@@ -58,4 +58,3 @@ git clone https://github.com/SildurFX/Switchdeck.git
 cd Switchdeck
 chmod +x install-steam.sh
 ./install-steam.sh 
-
