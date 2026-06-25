@@ -9,3 +9,8 @@ wget https://ryanfortner.github.io/box64-debs/box64.list -O /etc/apt/sources.lis
 wget -qO- https://ryanfortner.github.io/box64-debs/KEY.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/box64-debs-archive-keyring.gpg 
 apt update && apt install box64 -y
 apt-get install --fix-broken -y
+
+#!/bin/sh
+if [ -x /usr/lib/aarch64-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders ]; then
+    /usr/lib/aarch64-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders --update-cache || true
+fi
