@@ -1,2 +1,2 @@
-sudo lb clean
+sudo lb clean --purge
 sudo rm -rf .build/
