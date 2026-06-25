@@ -1,15 +1,12 @@
 [Desktop Entry]
-Type=Application
-Version=1.0
 Name=Steam
-GenericName=Free-form Game Emulation Platform
-Comment=Play games on Steam via FEX-Emu
-Exec=FEXBash steam %U
+Comment=Play games on ARM64 Linux
+Exec=/usr/local/bin/steam-arm64 %U
 Icon=steam
 Terminal=false
-MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;
-Categories=Game;Amusement;
-Keywords=Games;Store;Launcher;FEX;
+Type=Application
+Categories=Game;Network;
+MimeType=x-scheme-handler/steam;
 
 # KDE-Specific Tweaks
 X-KDE-StartupNotify=true
