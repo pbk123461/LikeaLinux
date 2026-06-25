@@ -46,15 +46,41 @@ apt-get install -y \
     libgl1:i386 \
     libvulkan1:i386 \
     vulkan-tools \
-    fonts-liberation
-
+    fonts-liberation \
+    x11-utils \
+    lsof
 apt-get install --fix-broken -y
 
-STEAM_TARGET="/usr/local/share/Steam"
-mkdir -p "${STEAM_TARGET}/package"
+#!/bin/sh
 
-cd /tmp
-git clone https://github.com/SildurFX/Switchdeck.git
-cd Switchdeck
-chmod +x install-steam.sh
-./install-steam.sh 
+set -e
+
+apt-get update
+TARGET_DIR="/etc/skel/Switchdeck"
+
+mkdir -p "${TARGET_DIR}"
+git clone https://github.com/SildurFX/Switchdeck.git "${TARGET_DIR}"
+
+if [ -f "${TARGET_DIR}/install-steam.sh" ]; then
+    chmod +x "${TARGET_DIR}/install-steam.sh"
+fi
+
+if [ -f "${TARGET_DIR}/update-switchdeck.sh" ]; then
+    chmod +x "${TARGET_DIR}/update-switchdeck.sh"
+fi
+
+DESKTOP_DIR="/etc/skel/Desktop"
+mkdir -p "${DESKTOP_DIR}"
+
+cat << 'EOF' > "${DESKTOP_DIR}/Steam-setup.desktop"
+[Desktop Entry]
+Type=Application
+Terminal=true
+Name=Setup Switchdeck (Steam ARM64)
+Comment=Install Steam and compatibility patches for Nintendo Switch
+Exec=bash -c 'cd ~/Switchdeck && ./install-steam.sh && ./launch-steam.sh; read -p "Press enter to exit..."'
+Icon=steam
+Categories=Game;
+EOF
+
+chmod +x "${DESKTOP_DIR}/Steam-setup.desktop"
