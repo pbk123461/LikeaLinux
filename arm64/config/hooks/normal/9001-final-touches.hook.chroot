@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+flatpak install -y flathub it.mijorus.gearlever
+
+flatpak install -y flathub org.libretro.RetroArch
+
+flatpak install -y flathub com.dekomote.vermouth
+
+flatpak install -y flathub org.gnome.DejaDup
+
+flatpak install -y flathub org.kde.kamoso
+
+flatpak install -y flathub org.kde.kclock
+
+flatpak install -y flathub org.kde.koko
+
+flatpak install -y flathub org.kde.filelight
+
+flatpak install -y flathub org.kde.marknote
+
+flatpak install -y flathub io.github.schwarzen.colormydesktop

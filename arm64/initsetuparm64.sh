@@ -16,6 +16,6 @@ lb config \
 --iso-volume "LIKEALINUX0" \
 --binary-images iso-hybrid \
 --system live \
---bootappend-live "boot=live componets quiet splash" \
+--bootappend-live "boot=live components quiet splash username=kiryulive hostname=LikeALinux" \
 --hdd-label "DojimaHQ" \
---build-with-chroot true
+--build-with-chroot true 

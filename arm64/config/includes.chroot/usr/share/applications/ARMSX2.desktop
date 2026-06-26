@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=ARMSX2
+Name=A PS2 emulator
+Exec=/usr/local/bin/ARMSX2-linux-Qt-arm64.AppImage
+Icon=utilities-terminal
+Categories=Utility;
+Terminal=false
