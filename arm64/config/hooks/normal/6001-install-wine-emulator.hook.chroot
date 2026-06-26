@@ -1,12 +1,18 @@
-#/bin/sh
+#!/bin/sh
 
 set -e
 
 cd /tmp
-wget https://github.com/AndreRH/hangover/releases/download/hangover-11.9/hangover_11.9_debian13_trixie_arm64.tar
-tar -xvf hangover_11.9_debian13_trixie_arm64.tar
-cd hangover_11.9_debian13_trixie_arm64
-apt install -y ./hangover*.deb
 
-cd /tmp
-rm -rf hangover_11.9_debian13_trixie_arm64*
+wget https://github.com/AndreRH/hangover/releases/download/hangover-11.9/hangover_11.9_debian13_trixie_arm64.tar
+
+tar -xvf hangover_11.9_debian13_trixie_arm64.tar
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y ./hangover*.deb
+
+rm -f hangover_11.9_debian13_trixie_arm64.tar
+rm -f hangover*.deb
+rm -f dxvk*.tar.gz
+
+apt-get clean
