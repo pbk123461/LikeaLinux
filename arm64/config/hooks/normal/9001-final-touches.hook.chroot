@@ -2,6 +2,14 @@
 
 set -e
 
+if [ ! -f /var/lib/flatpak/repo/config ] || ! grep -q '\[core\]' /var/lib/flatpak/repo/config; then
+    mkdir -p /var/lib/flatpak/repo
+    ostree init --mode=bare-user-only --repo=/var/lib/flatpak/repo
+fi
+
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+
 flatpak install -y flathub it.mijorus.gearlever
 
 flatpak install -y flathub org.libretro.RetroArch
