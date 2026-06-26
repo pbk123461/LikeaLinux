@@ -76,9 +76,9 @@ cat << 'EOF' > "${DESKTOP_DIR}/Steam-setup.desktop"
 [Desktop Entry]
 Type=Application
 Terminal=true
-Name=Setup Switchdeck (Steam ARM64)
-Comment=Install Steam and compatibility patches for Nintendo Switch
-Exec=bash -c 'cd ~/Switchdeck && ./install-steam.sh && ./launch-steam.sh; read -p "Press enter to exit..."'
+Name=Setup Steam (ARM64)
+Comment=Install Steam and compatibility patches for Arm64/Nintendo Switch
+Exec=bash -c 'cd /etc/skel/Switchdeck && ./install-steam.sh && ./launch-steam.sh; read -p "Press enter to exit..."'
 Icon=steam
 Categories=Game;
 EOF

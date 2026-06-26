@@ -2,10 +2,11 @@
 
 set -e
 
-mkdir -pm755 /etc/apt/keyrings
-wget -O - https://dl.winehq.org/wine-builds/winehq.key | sudo gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key -
-wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/trixie/winehq-trixie.sources
+cd /tmp
+wget https://github.com/AndreRH/hangover/releases/download/hangover-11.9/hangover_11.9_debian13_trixie_arm64.tar
+tar -xvf hangover_11.9_debian13_trixie_arm64.tar
+cd hangover_11.9_debian13_trixie_arm64
+apt install -y ./hangover*.deb
 
-apt update
-
-apt install -y --install-recommends winehq-stable
+cd /tmp
+rm -rf hangover_11.9_debian13_trixie_arm64*

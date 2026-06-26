@@ -20,3 +20,6 @@ plasma-discover-backend-snap
 unzip
 fastfetch
 ncdu
+gparted
+gnome-disk-utility
+

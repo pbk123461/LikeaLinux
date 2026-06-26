@@ -3,9 +3,11 @@
   "logo": {
     "source": "~/.config/fastfetch/logo.txt",
     "type": "file",
+    "width": 35,
     "padding": {
       "top": 3,
-      "left": 3
+      "left": 3,
+      "right": 4
     }
   },
   "display": {

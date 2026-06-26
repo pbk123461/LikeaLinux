@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/alacritty 50
+
+update-alternatives --set x-terminal-emulator /usr/bin/alacritty
+
+update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/helium 200
+
+update-alternatives --set x-www-browser /usr/bin/helium
+
+apt remove firefox-esr -y
+
+cat /etc/shells
+echo "$(which zsh)" >> /etc/shells
+
+sudo chsh -s "$(which zsh)" root
+sudo chsh -s "/usr/bin/zsh" root
+chsh -s $(which zsh)
+chsh -s /usr/bin/zsh
+
+echo $SHELL
