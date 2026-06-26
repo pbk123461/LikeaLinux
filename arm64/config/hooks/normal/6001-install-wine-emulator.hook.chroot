@@ -2,14 +2,17 @@
 
 set -e
 
-cd /tmp
-
 wget https://github.com/AndreRH/hangover/releases/download/hangover-11.9/hangover_11.9_debian13_trixie_arm64.tar
 
 tar -xvf hangover_11.9_debian13_trixie_arm64.tar
 
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y ./hangover*.deb
+
+DEBIAN_FRONTEND=noninteractive 
+apt-get purge -y fonts-wine wine || true
+
+DEBIAN_FRONTEND=noninteractive 
+apt-get install -y -o Dpkg::Options::="--force-overwrite" ./hangover*.deb
 
 rm -f hangover_11.9_debian13_trixie_arm64.tar
 rm -f hangover*.deb

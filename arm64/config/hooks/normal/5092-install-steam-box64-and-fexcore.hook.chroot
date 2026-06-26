@@ -10,47 +10,6 @@ dpkg --add-architecture armhf
 
 apt-get update
 
-apt-get install -y \
-    libc6:arm64 \
-    libegl1:arm64 \
-    libgbm1:arm64 \
-    libgl1:arm64 \
-    libgl1-mesa-dri:arm64 \
-    libgl1-mesa-dri \
-    libglu1-mesa \
-    libvulkan1 \
-    libibus-1.0-5 \
-    libc6:armhf \
-    libsdl2-2.0-0:armhf \
-    libsdl2-image-2.0-0:armhf \
-    libsdl2-mixer-2.0-0:armhf \
-    libsdl2-ttf-2.0-0:armhf \
-    libopenal1:armhf \
-    libpng16-16t64:armhf \
-    libfontconfig1:armhf \
-    libxcomposite1:armhf \
-    libbz2-1.0:armhf \
-    libxtst6:armhf \
-    libsm6:armhf \
-    libice6:armhf \
-    libgl1:armhf \
-    libxinerama1:armhf \
-    libxdamage1:armhf \
-    libncurses6:armhf \
-    libgl1-mesa-dri:armhf \
-    libglu1-mesa:armhf \
-    libvulkan1:armhf \
-    libcurl4t64:armhf \
-    libgl1-mesa-dri:amd64 \
-    libgl1-mesa-dri:i386 \
-    libgl1:i386 \
-    libvulkan1:i386 \
-    vulkan-tools \
-    fonts-liberation \
-    x11-utils \
-    lsof
-apt-get install --fix-broken -y
-
 #!/bin/sh
 
 set -e
