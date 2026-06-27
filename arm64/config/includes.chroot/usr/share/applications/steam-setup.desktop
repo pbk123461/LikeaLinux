@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Terminal=true
+Name=Setup Steam (ARM64)
+Comment=Install Steam and compatibility patches for Arm64/Nintendo Switch
+Exec=bash -c 'cd /etc/skel/Switchdeck && ./install-steam.sh && ./launch-steam.sh; read -p "Press enter to exit..."'
+Icon=steam
+Categories=Game;
