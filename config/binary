@@ -10,7 +10,7 @@ LB_BINARY_FILESYSTEM="fat32"
 LB_APT_INDICES="true"
 
 # Set boot parameters
-LB_BOOTAPPEND_LIVE="quiet splash"
+LB_BOOTAPPEND_LIVE="boot=live componets quiet splash"
 
 # Set boot parameters
 LB_BOOTAPPEND_INSTALL=""
@@ -25,7 +25,7 @@ LB_BOOTLOADER_BIOS=""
 LB_BOOTLOADER_EFI="grub-efi"
 
 # Set bootloaders
-LB_BOOTLOADERS="grub-efi"
+LB_BOOTLOADERS=""
 
 # Set checksums
 LB_CHECKSUMS="sha256"
@@ -62,7 +62,7 @@ LB_DEBIAN_INSTALLER_PRESEEDFILE=""
 LB_DEBIAN_INSTALLER_GUI="true"
 
 # Set hdd label
-LB_HDD_LABEL="Dojima"
+LB_HDD_LABEL="DojimaHQ"
 
 # Set hdd filesystem size
 LB_HDD_SIZE="auto"
@@ -71,7 +71,7 @@ LB_HDD_SIZE="auto"
 LB_HDD_PARTITION_START=""
 
 # Set iso author
-LB_ISO_APPLICATION="KazumaKiryus"
+LB_ISO_APPLICATION="KazumaKiryu"
 
 # Set iso preparer
 LB_ISO_PREPARER="live-build @LB_VERSION@; https://salsa.debian.org/live-team/live-build"
@@ -80,13 +80,13 @@ LB_ISO_PREPARER="live-build @LB_VERSION@; https://salsa.debian.org/live-team/liv
 LB_ISO_PUBLISHER="pbk123461"
 
 # Set iso volume (max 32 chars)
-LB_ISO_VOLUME="LIKEALINUX_0--binary-images"
+LB_ISO_VOLUME="LIKEALINUX0"
 
 # Set jffs2 eraseblock size
 LB_JFFS2_ERASEBLOCK=""
 
 # Set memtest
-LB_MEMTEST="memtest86+"
+LB_MEMTEST="none"
 
 # Set loadlin
 LB_LOADLIN="false"
@@ -113,7 +113,7 @@ LB_FIRMWARE_CHROOT="true"
 LB_SWAP_FILE_PATH=""
 
 # Set swap file size
-LB_SWAP_FILE_SIZE="4096"
+LB_SWAP_FILE_SIZE="2048"
 
 # Enable/disable UEFI secure boot support
 LB_UEFI_SECURE_BOOT="auto"
