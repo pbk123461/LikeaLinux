@@ -21,11 +21,16 @@ apt install -y \
     libegl-mesa0 \
     libgbm1 \
     mesa-va-drivers \
+
+
+ apt install -y --no-install-recommends \
     mesa-vulkan-drivers:armhf \
     libgl1-mesa-dri:armhf \
     libegl1:armhf \
     libegl-mesa0:armhf \
     libgbm1:armhf \
+
+ apt install -y \   
     firmware-misc-nonfree \
     firmware-qcom-soc \
     firmware-linux-nonfree \
