@@ -30,7 +30,7 @@ apt install -y \
     libegl-mesa0:armhf \
     libgbm1:armhf \
 
- apt install -y \   
+ apt install -y \
     firmware-misc-nonfree \
     firmware-qcom-soc \
     firmware-linux-nonfree \
