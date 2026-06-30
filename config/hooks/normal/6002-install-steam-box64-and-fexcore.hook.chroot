@@ -4,11 +4,13 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
+
 dpkg --add-architecture i386
 dpkg --add-architecture armhf
 
 
 apt-get update
+
 
 apt install -y \
     wget \
@@ -34,6 +36,7 @@ apt install -y --no-install-recommends \
     libegl-mesa0:armhf \
     libgbm1:armhf
 
+
 apt install -y \
     firmware-misc-nonfree \
     firmware-qcom-soc \
@@ -42,13 +45,13 @@ apt install -y \
     mangohud \
     gamescope
 
+
 WORK_DIR="/root/build_temp"
 mkdir -p "$WORK_DIR"
 
 
 PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-1/GE-Proton11-1-aarch64.tar.gz"
 PROTON_TAR="$WORK_DIR/GE-Proton11-1-aarch64.tar.gz"
-
 
 COMPAT_DIR="/usr/local/share/steam/compatibilitytools.d"
 mkdir -p "$COMPAT_DIR"
@@ -65,8 +68,8 @@ wget -q -O "$STEAM_ZIP" "$STEAM_URL"
 
 
 STEAM_SKEL_DIR="/etc/skel/.local/share/Steam"
-mkdir -p "$STEAM_SKEL_DIR/steamrtarm64"
-unzip -q -o "$STEAM_ZIP" -d "$STEAM_SKEL_DIR/steamrtarm64"
+mkdir -p "$STEAM_SKEL_DIR"
+unzip -q -o "$STEAM_ZIP" -d "$STEAM_SKEL_DIR"
 
 
 mkdir -p "$STEAM_SKEL_DIR/package"
@@ -79,13 +82,11 @@ chmod -R u+rwx "$STEAM_SKEL_DIR/steamrtarm64/"
 mkdir -p /etc/skel/.steam
 ln -sf /etc/skel/.local/share/Steam/linuxarm64 /etc/skel/.steam/sdkarm64
 
-echo "=== Symlinking libvpx.so.6 ==="
 
 if [ -f /usr/lib/aarch64-linux-gnu/libvpx.so.9 ] && [ ! -f /usr/lib/aarch64-linux-gnu/libvpx.so.6 ]; then
     ln -s /usr/lib/aarch64-linux-gnu/libvpx.so.9 /usr/lib/aarch64-linux-gnu/libvpx.so.6
 fi
 
-echo "=== Creating Desktop Shortcut ==="
 
 cat << 'EOF' > /usr/share/applications/steam.desktop
 [Desktop Entry]
@@ -98,9 +99,6 @@ Type=Application
 Categories=Network;FileTransfer;Game;
 EOF
 
-echo "=== Cleaning up workspace and apt cache ==="
 rm -rf "$WORK_DIR"
 apt-get clean
 apt-get autoremove -y
-
-echo "=== Chroot Hook Complete ==="
