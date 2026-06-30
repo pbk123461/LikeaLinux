@@ -4,10 +4,8 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-
 dpkg --add-architecture i386
 dpkg --add-architecture armhf
-
 
 apt-get update
 
@@ -35,10 +33,8 @@ apt install -y \
     mangohud \
     gamescope
 
-
 PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-1/GE-Proton11-1-aarch64.tar.gz"
 PROTON_TAR="GE-Proton11-1-aarch64.tar.gz"
-
 
 COMPAT_DIR="/usr/local/share/steam/compatibilitytools.d"
 mkdir -p "$COMPAT_DIR"
@@ -54,4 +50,3 @@ rm -f /tmp/steam.deb
 
 apt-get clean
 apt-get autoremove -y
-
