@@ -7,10 +7,8 @@ export DEBIAN_FRONTEND=noninteractive
 dpkg --add-architecture i386
 dpkg --add-architecture armhf
 
-echo "=== Updating Apt ==="
 apt-get update
 
-echo "=== Installing Graphics, Freedreno, Panfrost, & Firmware ==="
 apt install -y \
     wget \
     ca-certificates \
@@ -18,13 +16,15 @@ apt install -y \
     mesa-utils \
     mesa-vulkan-drivers \
     libgl1-mesa-dri \
-    libegl1-mesa \
+    libegl1 \
+    libegl-mesa0 \
     libgbm1 \
     mesa-va-drivers \
     mesa-utils:armhf \
     mesa-vulkan-drivers:armhf \
     libgl1-mesa-dri:armhf \
-    libegl1-mesa:armhf \
+    libegl1:armhf \
+    libegl-mesa0:armhf \
     libgbm1:armhf \
     firmware-misc-nonfree \
     firmware-qcom-soc \
