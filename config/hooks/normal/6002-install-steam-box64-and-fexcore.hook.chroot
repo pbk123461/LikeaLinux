@@ -1,140 +1,106 @@
 #!/bin/sh
+
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
 dpkg --add-architecture i386
 dpkg --add-architecture armhf
+
+
 apt-get update
 
 apt install -y \
-    wget ca-certificates tar \
-    mesa-utils mesa-vulkan-drivers \
-    libgl1-mesa-dri libegl1 libegl-mesa0 libgbm1 mesa-va-drivers
+    wget \
+    ca-certificates \
+    tar \
+    unzip \
+    mesa-utils \
+    mesa-vulkan-drivers \
+    libgl1-mesa-dri \
+    libegl1 \
+    libegl-mesa0 \
+    libgbm1 \
+    mesa-va-drivers \
+    libgtk2.0-common \
+    libsdl2-2.0-0 \
+    libsdl2-mixer-2.0-0
+
 
 apt install -y --no-install-recommends \
     mesa-vulkan-drivers:armhf \
     libgl1-mesa-dri:armhf \
-    libegl1:armhf libegl-mesa0:armhf libgbm1:armhf
-
-
-apt install -y \
-    firmware-misc-nonfree firmware-qcom-soc firmware-linux-nonfree \
-    gamemode mangohud gamescope
+    libegl1:armhf \
+    libegl-mesa0:armhf \
+    libgbm1:armhf
 
 apt install -y \
-    libgtk2.0-common \
-    libsdl2-2.0-0 libsdl2-mixer-2.0-0 \
-    libvpx9 \
-    libxtst6 libxss1 libnss3 \
-    libasound2 libasound2-plugins \
-    libnotify4 libcurl4 libxshmfence1
-
-
-ln -sf /usr/lib/aarch64-linux-gnu/libvpx.so.9 \
-       /usr/lib/aarch64-linux-gnu/libvpx.so.6
-
-
-cat > /usr/share/binfmts/box64.conf <<'EOF'
-package = box64
-interpreter = /usr/bin/box64
-magic = \x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00
-mask = \xff\xff\xff\xff\xff\xff\xff\xfc\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff
-credentials = yes
-EOF
-update-binfmts --import box64.conf || true
-update-binfmts --enable box64  || true
+    firmware-misc-nonfree \
+    firmware-qcom-soc \
+    firmware-linux-nonfree \
+    gamemode \
+    mangohud \
+    gamescope
 
 WORK_DIR="/root/build_temp"
 mkdir -p "$WORK_DIR"
 
-PROTON_GE_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-1/GE-Proton11-1-aarch64.tar.gz"
-PROTON_GE_TAR="$WORK_DIR/GE-Proton11-1-aarch64.tar.gz"
+
+PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-1/GE-Proton11-1-aarch64.tar.gz"
+PROTON_TAR="$WORK_DIR/GE-Proton11-1-aarch64.tar.gz"
+
+
 COMPAT_DIR="/usr/local/share/steam/compatibilitytools.d"
 mkdir -p "$COMPAT_DIR"
 
-wget -q -O "$PROTON_GE_TAR" "$PROTON_GE_URL"
-tar -xzf "$PROTON_GE_TAR" -C "$COMPAT_DIR"
-rm -f "$PROTON_GE_TAR"
+wget -q -O "$PROTON_TAR" "$PROTON_URL"
+tar -xzf "$PROTON_TAR" -C "$COMPAT_DIR"
+rm -f "$PROTON_TAR"
 
-chmod -R a+rX "$COMPAT_DIR/GE-Proton11-1"
 
-STEAM_DEB="$WORK_DIR/steam.deb"
-wget -q -O "$STEAM_DEB" "https://cdn.cloudflare.steamstatic.com/client/installer/steam.deb"
-dpkg-deb -x "$STEAM_DEB" /
-rm -f "$STEAM_DEB"
+STEAM_URL="https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.0f11199e9a58a0ec4aab3833152ada1b2e56c846"
+STEAM_ZIP="$WORK_DIR/bins_linuxarm64_linuxarm64.zip"
 
-STEAM_STAGE="/usr/local/share/steam-arm64-native"
-mkdir -p "$STEAM_STAGE"
+wget -q -O "$STEAM_ZIP" "$STEAM_URL"
 
-wget -q -O "$WORK_DIR/steamarm.zip" \
-  "https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.f523fa87fc6b9b5435a5e7370cb0d664ef53b50b"
-unzip -q -o "$WORK_DIR/steamarm.zip" -d "$STEAM_STAGE/"
-rm -f "$WORK_DIR/steamarm.zip"
 
-mkdir -p "$STEAM_STAGE/package"
-echo publicbeta > "$STEAM_STAGE/package/beta"
-chmod -R u+rwx "$STEAM_STAGE/steamrtarm64"
+STEAM_SKEL_DIR="/etc/skel/.local/share/Steam"
+mkdir -p "$STEAM_SKEL_DIR/steamrtarm64"
+unzip -q -o "$STEAM_ZIP" -d "$STEAM_SKEL_DIR/steamrtarm64"
 
-if [ -d /usr/lib/hangover ]; then
-    echo "Hangover found at /usr/lib/hangover"
-else
-    echo "WARN: /usr/lib/hangover not found — re-install hangover" >&2
-fi
-[ -x /usr/bin/hangover ] || echo "WARN: /usr/bin/hangover missing" >&2
 
-cat > /usr/local/bin/steam-arm64-bootstrap <<'EOF'
-#!/bin/sh
-set -e
-USERHOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
-[ -z "$USERHOME" ] && exit 0
-STEAM_DIR="$USERHOME/.local/share/Steam"
-STAGE="/usr/local/share/steam-arm64-native"
+mkdir -p "$STEAM_SKEL_DIR/package"
+echo "publicbeta" > "$STEAM_SKEL_DIR/package/beta"
 
-# Native ARM64 client
-if [ ! -x "$STEAM_DIR/steamrtarm64/steam" ]; then
-    mkdir -p "$STEAM_DIR/package"
-    cp -r "$STAGE/steamrtarm64" "$STEAM_DIR/"
-    cp "$STAGE/package/beta" "$STEAM_DIR/package/beta"
-    chmod -R u+rwx "$STEAM_DIR/steamrtarm64"
+
+chmod -R u+rwx "$STEAM_SKEL_DIR/steamrtarm64/"
+
+
+mkdir -p /etc/skel/.steam
+ln -sf /etc/skel/.local/share/Steam/linuxarm64 /etc/skel/.steam/sdkarm64
+
+echo "=== Symlinking libvpx.so.6 ==="
+
+if [ -f /usr/lib/aarch64-linux-gnu/libvpx.so.9 ] && [ ! -f /usr/lib/aarch64-linux-gnu/libvpx.so.6 ]; then
+    ln -s /usr/lib/aarch64-linux-gnu/libvpx.so.9 /usr/lib/aarch64-linux-gnu/libvpx.so.6
 fi
 
-# Proton GE ARM64 → user-visible compat tool
-if [ -d /usr/local/share/steam/compatibilitytools.d ]; then
-    mkdir -p "$STEAM_DIR/compatibilitytools.d"
-    cp -rn /usr/local/share/steam/compatibilitytools.d/. \
-          "$STEAM_DIR/compatibilitytools.d/"
-fi
+echo "=== Creating Desktop Shortcut ==="
 
-# Steam Linux Runtime symlink (Proton needs this to find its own libs)
-mkdir -p "$USERHOME/.steam"
-ln -sfn "$STEAM_DIR/linuxarm64" "$USERHOME/.steam/sdkarm64"
-EOF
-chmod +x /usr/local/bin/steam-arm64-bootstrap
-
-cat > /etc/xdg/autostart/steam-arm64-bootstrap.desktop <<'EOF'
-[Desktop Entry]
-Type=Application
-Name=Steam ARM64 First-Run
-Exec=/usr/local/bin/steam-arm64-bootstrap
-Terminal=false
-X-GNOME-Autostart-enabled=true
-EOF
-
-if [ ! -f /usr/share/applications/steam.desktop ]; then
-    cat > /usr/share/applications/steam.desktop <<'EOF'
+cat << 'EOF' > /usr/share/applications/steam.desktop
 [Desktop Entry]
 Name=Steam
-Comment=Steam Client (ARM64 Native + Proton GE)
-Exec=/usr/local/share/steam-arm64-native/steamrtarm64/steam %U
+Comment=Steam Client (Native ARM64)
+Exec=/bin/sh -c '$HOME/.local/share/Steam/steamrtarm64/steam %U'
 Icon=steam
 Terminal=false
 Type=Application
 Categories=Network;FileTransfer;Game;
 EOF
-fi
 
-
+echo "=== Cleaning up workspace and apt cache ==="
 rm -rf "$WORK_DIR"
 apt-get clean
 apt-get autoremove -y
+
+echo "=== Chroot Hook Complete ==="
