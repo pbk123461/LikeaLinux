@@ -1,0 +1,53 @@
+#!/bin/sh
+
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+dpkg --add-architecture i386
+dpkg --add-architecture armhf
+
+echo "=== Updating Apt ==="
+apt-get update
+
+echo "=== Installing Graphics, Freedreno, Panfrost, & Firmware ==="
+apt install -y \
+    wget \
+    ca-certificates \
+    tar \
+    mesa-utils \
+    mesa-vulkan-drivers \
+    libgl1-mesa-dri \
+    libegl1-mesa \
+    libgbm1 \
+    mesa-va-drivers \
+    mesa-utils:armhf \
+    mesa-vulkan-drivers:armhf \
+    libgl1-mesa-dri:armhf \
+    libegl1-mesa:armhf \
+    libgbm1:armhf \
+    firmware-misc-nonfree \
+    firmware-qcom-soc \
+    firmware-linux-nonfree \
+    gamemode \
+    mangohud \
+    gamescope
+
+PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-1/GE-Proton11-1-aarch64.tar.gz"
+PROTON_TAR="GE-Proton11-1-aarch64.tar.gz"
+
+
+mkdir -p "$COMPAT_DIR"
+
+wget -q -O "/tmp/$PROTON_TAR" "$PROTON_URL"
+tar -xzf "/tmp/$PROTON_TAR" -C "$COMPAT_DIR"
+rm -f "/tmp/$PROTON_TAR"
+
+wget -q -O /tmp/steam.deb "https://cdn.cloudflare.steamstatic.com/client/installer/steam.deb"
+apt install -y /tmp/steam.deb
+rm -f /tmp/steam.deb
+
+
+apt-get clean
+apt-get autoremove -y
+

@@ -29,3 +29,7 @@ flatpak install -y flathub org.kde.marknote
 flatpak install -y flathub io.github.schwarzen.colormydesktop
 
 rm -rf /var/lib/apt/lists/*
+
+
+apt-get clean
+apt-get autoremove -y
