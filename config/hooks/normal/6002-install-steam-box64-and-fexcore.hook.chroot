@@ -23,7 +23,6 @@ apt install -y \
     libegl-mesa0 \
     libgbm1 \
     mesa-va-drivers \
-    mesa-utils:armhf \
     mesa-vulkan-drivers:armhf \
     libgl1-mesa-dri:armhf \
     libegl1:armhf \
