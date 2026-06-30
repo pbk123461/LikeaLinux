@@ -10,7 +10,6 @@ LB_BINARY_FILESYSTEM="fat32"
 LB_APT_INDICES="true"
 
 # Set boot parameters
-LB_BOOTAPPEND_LIVE="boot=live componets quiet splash"
 LB_BOOTAPPEND_LIVE="boot=live components quiet splash username=kiryulive hostname=LikeALinux"
 
 # Set boot parameters
