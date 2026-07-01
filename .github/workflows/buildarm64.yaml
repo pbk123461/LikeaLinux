@@ -31,8 +31,10 @@ jobs:
       - name: Configure Live Build
         run: |
           cd live-build-dir
-          # Force the environment to allow cross-building with QEMU chroot
-          export DEB_TARGET_ARCH=arm64
+          
+          # We explicitly define the target environment variables for live-build
+          export ARCH=arm64
+          export DEBIAN_HAS_ARM64_EMULATION=true
           
           lb config \
             --distribution trixie \
@@ -59,7 +61,8 @@ jobs:
       - name: Build ISO
         run: |
           cd live-build-dir
-          sudo lb build
+          # Run the build process with native execution properties bypassed
+          sudo ARCH=arm64 lb build
 
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
