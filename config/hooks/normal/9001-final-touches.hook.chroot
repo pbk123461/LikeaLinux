@@ -33,3 +33,10 @@ rm -rf /var/lib/apt/lists/*
 
 apt-get clean
 apt-get autoremove -y
+
+#!/bin/sh
+set -e
+# Force system to see the new theme option and rebuild initramfs
+if [ -x /usr/sbin/plymouth-set-default-theme ]; then
+    plymouth-set-default-theme red_loader
+fi

@@ -1,8 +1,7 @@
 [Desktop Entry]
-Type=ARMSX2
-Name=A PS2 emulator
+Type=Application
+Name=ARMSX2
 Exec=/usr/local/bin/ARMSX2-linux-Qt-arm64.AppImage
 Icon=utilities-terminal
-Categories=Game;
-Type=Application;
+Categories=Game;Emulator;
 Terminal=false
