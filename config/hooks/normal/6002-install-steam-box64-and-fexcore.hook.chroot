@@ -4,136 +4,19 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-echo "=== Adding Multiarch Architectures ==="
-dpkg --add-architecture i386
 dpkg --add-architecture armhf
 
-echo "=== Updating Apt ==="
-apt-get update
+apt upgrade -y
+apt update 
 
-echo "=== Installing Base 64-bit Packages ==="
-apt install -y \
-    wget \
-    ca-certificates \
-    tar \
-    unzip \
-    mesa-utils \
-    mesa-vulkan-drivers \
-    libgl1-mesa-dri \
-    libegl1 \
-    libegl-mesa0 \
-    libgbm1 \
-    mesa-va-drivers \
-    libgtk2.0-common \
-    libsdl2-2.0-0 \
-    libsdl2-mixer-2.0-0
+add-apt-repository -y ppa:kisak/kisak-mesa
 
-echo "=== Installing 32-bit armhf Packages ==="
-apt install -y --no-install-recommends \
-    mesa-vulkan-drivers:armhf \
-    libgl1-mesa-dri:armhf \
-    libegl1:armhf \
-    libegl-mesa0:armhf \
-    libgbm1:armhf
 
-echo "=== Installing Firmware & Gaming Tools ==="
-apt install -y \
-    firmware-misc-nonfree \
-    firmware-qcom-soc \
-    firmware-linux-nonfree \
-    gamemode \
-    mangohud \
-    gamescope
-
-echo "=== Setting up working directory ==="
-WORK_DIR="/root/build_temp"
-mkdir -p "$WORK_DIR"
-
-echo "=== Downloading and Extracting GE-Proton11 ==="
-PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-1/GE-Proton11-1-aarch64.tar.gz"
-PROTON_TAR="$WORK_DIR/GE-Proton11-1-aarch64.tar.gz"
-
-COMPAT_DIR="/usr/local/share/steam/compatibilitytools.d"
-mkdir -p "$COMPAT_DIR"
-
-wget -q -O "$PROTON_TAR" "$PROTON_URL"
-tar -xzf "$PROTON_TAR" -C "$COMPAT_DIR"
-rm -f "$PROTON_TAR"
-
-echo "=== Downloading and Installing Native ARM64 Steam ==="
-STEAM_URL="https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.0f11199e9a58a0ec4aab3833152ada1b2e56c846"
-STEAM_ZIP="$WORK_DIR/bins_linuxarm64_linuxarm64.zip"
-
-wget -q -O "$STEAM_ZIP" "$STEAM_URL"
-
-STEAM_SKEL_DIR="/etc/skel/.local/share/Steam"
-mkdir -p "$STEAM_SKEL_DIR"
-unzip -q -o "$STEAM_ZIP" -d "$STEAM_SKEL_DIR"
-
-mkdir -p "$STEAM_SKEL_DIR/package"
-echo "publicbeta" > "$STEAM_SKEL_DIR/package/beta"
-
-chmod -R u+rwx "$STEAM_SKEL_DIR/steamrtarm64/"
-
-mkdir -p /etc/skel/.steam
-cd /etc/skel/.steam
-ln -sf ../.local/share/Steam/linuxarm64 sdkarm64
-cd /
-
-echo "=== Symlinking libvpx.so.6 ==="
-if [ -f /usr/lib/aarch64-linux-gnu/libvpx.so.9 ] && [ ! -f /usr/lib/aarch64-linux-gnu/libvpx.so.6 ]; then
-    ln -s /usr/lib/aarch64-linux-gnu/libvpx.so.9 /usr/lib/aarch64-linux-gnu/libvpx.so.6
-fi
-
-echo "=== Creating Steam Launch Wrapper ==="
-cat << 'EOF' > /usr/local/bin/steam
-#!/bin/sh
-STEAM_DIR="$HOME/.local/share/Steam/steamrtarm64"
-if [ -d "$STEAM_DIR" ]; then
-    cd "$STEAM_DIR" || exit 1
-    exec ./steam "$@"
-else
-    echo "Steam directory not found: $STEAM_DIR"
-    exit 1
-fi
-EOF
-chmod +x /usr/local/bin/steam
-
-echo "=== Creating Desktop Shortcut for KDE ==="
-# 1. Install in system applications
-cat << 'EOF' > /usr/share/applications/steam.desktop
-[Desktop Entry]
-Name=Steam
-Name[en_US]=Steam
-Comment=Steam Client (Native ARM64)
-Exec=/usr/local/bin/steam %U
-Icon=steam
-Terminal=false
-Type=Application
-Categories=Network;FileTransfer;Game;
-StartupNotify=true
-EOF
-
-# 2. Copy to Desktop directory for KDE live user
-mkdir -p /etc/skel/Desktop
-cp /usr/share/applications/steam.desktop /etc/skel/Desktop/steam.desktop
-chmod +x /etc/skel/Desktop/steam.desktop
-
-# 3. Try to install the Steam icon so KDE doesn't hide the shortcut
-mkdir -p /usr/share/icons/hicolor/256x256/apps
-if [ -f "$STEAM_SKEL_DIR/steamrtarm64/steam_icon_256.png" ]; then
-    cp "$STEAM_SKEL_DIR/steamrtarm64/steam_icon_256.png" /usr/share/icons/hicolor/256x256/apps/steam.png
-elif [ -f "$STEAM_SKEL_DIR/steamrtarm64/resource/steAM.png" ]; then
-    cp "$STEAM_SKEL_DIR/steamrtarm64/resource/steAM.png" /usr/share/icons/hicolor/256x256/apps/steam.png
-fi
-
-# Update desktop and icon databases
-update-desktop-database /usr/share/applications/ || true
-gtk-update-icon-cache /usr/share/icons/hicolor/ || true
-
-echo "=== Cleaning up workspace and apt cache ==="
-rm -rf "$WORK_DIR"
-apt-get clean
-apt-get autoremove -y
-
-echo "=== Chroot Hook Complete ==="
+mkdir -p ~/steam && mkdir -p ~/steam/tmp && cd ~/steam/tmp && wget https://cdn.cloudflare.steamstatic.com/client/installer/steam.deb && ar x steam.deb && tar xf data.tar.xz && rm ./*.tar.xz ./steam.deb && mv ./usr/* ../ && cd ../ && rm -rf ./tmp/ && bash -c 'cat <<EOF > steam && chmod +x steam && mv steam /usr/local/bin/
+#!/bin/bash
+export STEAMOS=1
+export STEAM_RUNTIME=1
+export DBUS_FATAL_WARNINGS=0
+export PAN_MESA_DEBUG=gofaster,gl3
+box64 ~/steam/bin/steam \$@
+EOF'
