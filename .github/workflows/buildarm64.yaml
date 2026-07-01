@@ -32,21 +32,20 @@ jobs:
         run: |
           cd live-build-dir
           
-          # We explicitly define the target environment variables for live-build
           export ARCH=arm64
           export DEBIAN_HAS_ARM64_EMULATION=true
+          # This sets the target image name without breaking lb config
+          export LB_IMAGE_NAME="LIKEALINUX_Kiryu"
           
           lb config \
             --distribution trixie \
             -a arm64 \
             --apt-recommends true \
-            --chroot-squashfs-compression-type zstd \
+            --compression zstd \
             --mirror-chroot-security https://security.debian.org/debian-security/ \
             --mirror-binary https://deb.debian.org/debian/ \
             --mirror-bootstrap https://deb.debian.org/debian/ \
-            --image-name LIKEALINUX_Kiryu \
-            --updates true \
-            --firmware-chroot true \
+            --parent-mirror-binary-updates https://deb.debian.org/debian/ \
             --linux-flavours "arm64" \
             --archive-areas "main contrib non-free non-free-firmware" \
             --iso-application "KazumaKiryu" \
@@ -61,7 +60,6 @@ jobs:
       - name: Build ISO
         run: |
           cd live-build-dir
-          # Run the build process with native execution properties bypassed
           sudo ARCH=arm64 lb build
 
       - name: Upload ISO Artifact
