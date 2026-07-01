@@ -23,7 +23,6 @@ jobs:
 
       - name: Clean Previous Builds
         run: |
-          # Create the directory if it doesn't exist yet, then clean it
           mkdir -p live-build-dir
           cd live-build-dir
           sudo lb clean --purge
@@ -32,6 +31,9 @@ jobs:
       - name: Configure Live Build
         run: |
           cd live-build-dir
+          # Force the environment to allow cross-building with QEMU chroot
+          export DEB_TARGET_ARCH=arm64
+          
           lb config \
             --distribution trixie \
             -a arm64 \
@@ -60,7 +62,7 @@ jobs:
           sudo lb build
 
       - name: Upload ISO Artifact
-        uses: actions/artifacts@v4
+        uses: actions/upload-artifact@v4
         with:
           name: LIKEALINUX_Kiryu-ISO
           path: live-build-dir/*.iso
