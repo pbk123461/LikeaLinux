@@ -1,2 +1,24 @@
-./lbclean
-./lbbuild
+sudo lb clean --purge
+sudo rm -rf .build/
+lb config \
+--distribution trixie \
+-a arm64 \
+--apt-recommends true \
+--chroot-squashfs-compression-type zstd \
+--mirror-chroot-security https://security.debian.org/debian-security/ \
+--mirror-binary https://deb.debian.org/debian/ \
+--mirror-bootstrap https://deb.debian.org/debian/ \
+--image-name LIKEALINUX_Kiryu \
+--updates true \
+--firmware-chroot true \
+--linux-flavours "arm64" \
+--archive-areas "main contrib non-free non-free-firmware" \
+--iso-application "KazumaKiryu" \
+--iso-publisher "pbk123461" \
+--iso-volume "LIKEALINUX0" \
+--binary-images iso-hybrid \
+--system live \
+--bootappend-live "boot=live components quiet splash username=kiryulive hostname=LikeALinux" \
+--hdd-label "DojimaHQ" \
+--build-with-chroot true 
+sudo lb build
