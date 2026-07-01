@@ -7,35 +7,25 @@ on:
 
 jobs:
   build-iso:
-    runs-on: ubuntu-latest
+    # Switch from ubuntu-latest (which is x86_64) to the native ARM64 runner
+    runs-on: ubuntu-latest-arm64
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies & QEMU for arm64 Cross-Building
+      - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             live-build \
-            qemu-user-static \
-            binfmt-support \
             debootstrap
 
       - name: Run Build Script
         run: |
-          chmod +x ./lbbuildforgithubactions.sh
+          chmod +x ./lbbuildandclean.sh
           
-          # Force architecture environments
-          export ARCH=arm64
-          export DEBIAN_HAS_ARM64_EMULATION=true
-          export LB_IMAGE_NAME="LIKEALINUX_Kiryu"
-          
-          # Disable security and backports for Debian Testing (Trixie)
-          export LB_SECURITY="false"
-          export LB_BACKPORTS="false"
-          
-          # Execute your custom build and clean script
-          sudo -E ./lbbuildforgithubactions.sh
+          # Run the script directly without needing foreign architecture overrides
+          sudo ./lbbuildandclean.sh
 
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
