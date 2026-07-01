@@ -9,14 +9,139 @@ dpkg --add-architecture armhf
 apt upgrade -y
 apt update 
 
-add-apt-repository -y ppa:kisak/kisak-mesa
+#!/bin/sh
 
+# 0500-box64-setup.hook.chroot
+# This script runs INSIDE the live-build chroot during compilation.
+# It prepares your system for Box64, Box86, and Valve's Native ARM64 Steam Client.
 
-mkdir -p ~/steam && mkdir -p ~/steam/tmp && cd ~/steam/tmp && wget https://cdn.cloudflare.steamstatic.com/client/installer/steam.deb && ar x steam.deb && tar xf data.tar.xz && rm ./*.tar.xz ./steam.deb && mv ./usr/* ../ && cd ../ && rm -rf ./tmp/ && bash -c 'cat <<EOF > steam && chmod +x steam && mv steam /usr/local/bin/
+set -e
+
+echo "======================================================"
+echo " [Box64/Steam Hook] Creating Live Runtime Configurations "
+echo "======================================================"
+
+# 1. Create target directories safely if they don't already exist
+if [ ! -d /usr/local/bin ]; then
+    mkdir -p /usr/local/bin
+fi
+
+if [ ! -d /etc/xdg/autostart ]; then
+    mkdir -p /etc/xdg/autostart
+fi
+
+# 2. Generate the dynamic hardware detection & Steam staging script
+cat << 'EOF' > /usr/local/bin/box64-hardware-init.sh
 #!/bin/bash
-export STEAMOS=1
-export STEAM_RUNTIME=1
-export DBUS_FATAL_WARNINGS=0
-export PAN_MESA_DEBUG=gofaster,gl3
-box64 ~/steam/bin/steam \$@
-EOF'
+# Runs automatically on the live target environment to find matching SoC and prep Steam
+
+# Prevent multiple runs if the user logs out and logs back in
+[ -f /var/lib/box64-configured ] && exit 0
+
+echo "Detecting hardware for optimized Box64 selection..."
+
+MODEL=""
+if [ -f /sys/firmware/devicetree/base/model ]; then
+    MODEL=$(tr -d '\0' < /sys/firmware/devicetree/base/model | tr '[:upper:]' '[:lower:]')
+fi
+CPUINFO=$(grep -i "Hardware" /proc/cpuinfo | tr '[:upper:]' '[:lower:]')
+PAGESIZE=$(getconf PAGESIZE)
+
+# Default Fallback: Standard/Normal box64 and box86 packages
+BOX64_PKG="box64"
+BOX86_PKG="box86"
+
+# SoC Mapping Logic
+if [[ "$MODEL" == *"rk3588"* || "$CPUINFO" == *"rk3588"* ]]; then
+    BOX64_PKG="box64-rk3588"
+    BOX86_PKG="box86-rk3588"
+elif [[ "$MODEL" == *"rk3399"* || "$CPUINFO" == *"rk3399"* ]]; then
+    BOX64_PKG="box64-rk3399"
+elif [[ "$MODEL" == *"raspberry pi 5"* ]]; then
+    if [ "$PAGESIZE" -eq 16384 ]; then
+        BOX64_PKG="box64-rpi5arm64ps16k"
+    else
+        BOX64_PKG="box64-rpi5arm64"
+    fi
+elif [[ "$MODEL" == *"raspberry pi 4"* ]]; then
+    BOX64_PKG="box64-rpi4arm64"
+elif [[ "$MODEL" == *"raspberry pi 3"* ]]; then
+    BOX64_PKG="box64-rpi3arm64"
+elif [[ "$MODEL" == *"tegra x1"* ]]; then
+    BOX64_PKG="box64-tegrax1"
+elif [[ "$MODEL" == *"t194"* ]]; then
+    BOX64_PKG="box64-tegra-t194"
+elif [[ "$MODEL" == *"asahi"* ]]; then
+    BOX64_PKG="box64-m1"
+elif [[ "$MODEL" == *"sd888"* ]]; then
+    BOX64_PKG="box64-sd888"
+elif [[ "$MODEL" == *"oryon"* ]]; then
+    BOX64_PKG="box64-sdoryon1"
+else
+    echo "No optimized SoC profile detected. Falling back to normal box64/box86 packages."
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Update apt index and install the target emulation layers
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends "$BOX64_PKG" "$BOX86_PKG"
+
+if [ $? -eq 0 ]; then
+    sudo touch /var/lib/box64-configured
+    echo "Box emulation layout configured successfully using: $BOX64_PKG / $BOX86_PKG"
+fi
+
+# ==========================================================
+# Native Steam Client for ARM Linux Automatic Setup (InterfacingLinux workaround)
+# ==========================================================
+echo "Staging Native ARM64 Steam Client components..."
+
+LIVE_USER_HOME=$(eval echo "~${SUDO_USER:-$USER}")
+STEAM_DIR="${LIVE_USER_HOME}/.local/share/Steam"
+
+mkdir -p "${STEAM_DIR}"
+mkdir -p "${LIVE_USER_HOME}/.steam"
+
+# 1. Download official Valve ARM64 client archive archive
+cd /tmp
+wget -q --show-progress https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.0f11199e9a58a0ec4aab3833152ada1b2e56c846
+mv bins_linuxarm64_linuxarm64.zip.* bins_linuxarm64_linuxarm64.zip
+
+# 2. Extract into user layout
+unzip -q bins_linuxarm64_linuxarm64.zip -d "${STEAM_DIR}/"
+chmod -R u+rwx "${STEAM_DIR}/steamrtarm64/"
+
+# 3. Create required symlinks for standard steam runtime mapping
+ln -sf "${STEAM_DIR}" "${LIVE_USER_HOME}/.steam/steam"
+ln -sf "${STEAM_DIR}" "${LIVE_USER_HOME}/.steam/root"
+ln -sf "${STEAM_DIR}/linuxarm64" "${LIVE_USER_HOME}/.steam/sdkarm64"
+
+# 4. Force Public Beta flag so client updates against the ARM64 repo channel
+mkdir -p "${STEAM_DIR}/package"
+echo "publicbeta" > "${STEAM_DIR}/package/beta"
+
+# Ensure the live user owns their home directories cleanly
+chown -R ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} "${LIVE_USER_HOME}/.local" "${LIVE_USER_HOME}/.steam"
+
+echo "Native Steam Client for ARM64 installed. Note: Initialize an x86 login via Box64 first to bridge credentials if requested by the client."
+EOF
+
+# Ensure the generated initialization script is executable
+chmod +x /usr/local/bin/box64-hardware-init.sh
+
+# 3. Generate the XDG Desktop entry for automated execution on desktop login
+cat << 'EOF' > /etc/xdg/autostart/box64-detect.desktop
+[Desktop Entry]
+Type=Application
+Name=Box64 and Steam ARM64 Setup
+Comment=Configures translation layers and Steam client based on ARM board
+Exec=/usr/local/bin/box64-hardware-init.sh
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+EOF
+
+echo "======================================================"
+echo " [Box64 Hook] Generation complete. Files injected.  "
+echo "======================================================"
