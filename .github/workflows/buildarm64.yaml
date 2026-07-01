@@ -23,13 +23,16 @@ jobs:
 
       - name: Run Build Script
         run: |
-          # Ensure the script has execution permissions
           chmod +x ./lbbuildandclean.sh
           
-          # Force architecture environments so live-build handles the chroot properly
+          # Force architecture environments
           export ARCH=arm64
           export DEBIAN_HAS_ARM64_EMULATION=true
           export LB_IMAGE_NAME="LIKEALINUX_Kiryu"
+          
+          # Disable security and backports for Debian Testing (Trixie)
+          export LB_SECURITY="false"
+          export LB_BACKPORTS="false"
           
           # Execute your custom build and clean script
           sudo -E ./lbbuildandclean.sh
