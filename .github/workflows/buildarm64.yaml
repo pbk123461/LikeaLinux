@@ -34,7 +34,6 @@ jobs:
           
           export ARCH=arm64
           export DEBIAN_HAS_ARM64_EMULATION=true
-          # This sets the target image name without breaking lb config
           export LB_IMAGE_NAME="LIKEALINUX_Kiryu"
           
           lb config \
@@ -45,7 +44,7 @@ jobs:
             --mirror-chroot-security https://security.debian.org/debian-security/ \
             --mirror-binary https://deb.debian.org/debian/ \
             --mirror-bootstrap https://deb.debian.org/debian/ \
-            --parent-mirror-binary-updates https://deb.debian.org/debian/ \
+            --mirror-binary-updates https://deb.debian.org/debian/ \
             --linux-flavours "arm64" \
             --archive-areas "main contrib non-free non-free-firmware" \
             --iso-application "KazumaKiryu" \
