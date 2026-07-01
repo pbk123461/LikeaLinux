@@ -23,7 +23,7 @@ jobs:
 
       - name: Run Build Script
         run: |
-          chmod +x ./lbbuildandclean.sh
+          chmod +x ./lbbuildforgithubactions.sh
           
           # Force architecture environments
           export ARCH=arm64
@@ -35,7 +35,7 @@ jobs:
           export LB_BACKPORTS="false"
           
           # Execute your custom build and clean script
-          sudo -E ./lbbuildandclean.sh
+          sudo -E ./lbbuildforgithubactions.sh
 
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
