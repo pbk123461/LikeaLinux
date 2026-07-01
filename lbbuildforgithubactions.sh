@@ -15,3 +15,4 @@ lb config \
   --bootappend-live "boot=live components quiet splash username=kiryulive hostname=LikeALinux" \
   --hdd-label "DojimaHQ" \
   --build-with-chroot true
+sudo lb build
