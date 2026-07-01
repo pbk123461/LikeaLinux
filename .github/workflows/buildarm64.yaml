@@ -2,7 +2,7 @@ name: Build Debian Trixie Live ISO
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "arm64-v0" ]
   workflow_dispatch:
 
 jobs:
