@@ -80,11 +80,23 @@ mkdir -p "$LIVE_USER_HOME/.local/share/Steam/compatibilitytools.d/"
 
 # 1. Install Hangover Wine (Debian package)
 # Note: Update URL to the latest release from the Hangover GitHub repository
-HANGOVER_WINE_URL="https://github.com/scaronni/Hangover/releases/download/v0.1.0/Hangover_0.1.0_arm64.deb"
-wget -q "$HANGOVER_WINE_URL" -O /tmp/hangover-wine.deb
-apt-get install -y /tmp/hangover-wine.deb || apt-get install -f -y
-rm -f /tmp/hangover-wine.deb
+wget https://github.com/AndreRH/hangover/releases/download/hangover-11.9/hangover_11.9_debian13_trixie_arm64.tar
 
+tar -xvf hangover_11.9_debian13_trixie_arm64.tar
+
+apt-get update
+
+DEBIAN_FRONTEND=noninteractive 
+apt-get purge -y fonts-wine wine || true
+
+DEBIAN_FRONTEND=noninteractive 
+apt-get install -y -o Dpkg::Options::="--force-overwrite" ./hangover*.deb
+
+rm -f hangover_11.9_debian13_trixie_arm64.tar
+rm -f hangover*.deb
+rm -f dxvk*.tar.gz
+
+apt-get clean
 # 2. Install Hangover-ProtonGE (Extracted to Steam compatibilitytools.d)
 # Note: Update URL to the latest release from the Hangover-ProtonGE repository
 HANGOVER_PROTONGE_URL="https://github.com/scaronni/Hangover-ProtonGE/releases/download/v0.1.0/Hangover-ProtonGE-0.1.0.tar.xz"
