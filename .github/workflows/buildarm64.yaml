@@ -24,21 +24,20 @@ jobs:
 
     - name: Configure and Build ISO
       run: |
-        # Clean any previous artifact traces using GNU rm
+        # Clean any previous artifact traces
         sudo lb clean --purge
         sudo rm -rf .build/
 
-        # Run your exact live-build configuration
+        # Corrected live-build configuration flags
         sudo lb config \
           --distribution trixie \
           -a arm64 \
           --apt-recommends true \
-          --chroot-squashfs-compression-type zstd \
+          --squashfs-compression-type zstd \
           --mirror-chroot-security https://security.debian.org/debian-security/ \
           --mirror-binary https://deb.debian.org/debian/ \
           --mirror-bootstrap https://deb.debian.org/debian/ \
-          --image-name LIKEALINUX_Kiryu \
-          --updates true \
+          -o LIKEALINUX_Kiryu \
           --firmware-chroot true \
           --linux-flavours "arm64" \
           --archive-areas "main contrib non-free non-free-firmware" \
@@ -51,7 +50,7 @@ jobs:
           --hdd-label "DojimaHQ" \
           --build-with-chroot true 
 
-        # Execute the build utilizing the host's GNU tools for the environment creation
+        # Execute the build
         sudo lb build
 
     - name: Upload Finished ISO
