@@ -1,0 +1,30 @@
+{
+    "name": "Linux Distro Testing Lab",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        // Automatically installs and configures KasmVNC for a desktop GUI
+        "ghcr.io/devcontainers/features/desktop-lite:1": {
+            "version": "latest",
+            "desktopVncWebPort": "6080"
+        }
+    },
+    "runArgs": [
+        // Gives QEMU access to host virtualization if available
+        "--device=/dev/kvm"
+    ],
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "forwardPorts": [6080],
+    "portsAttributes": {
+        "6080": {
+            "label": "KasmVNC Desktop",
+            "onAutoForward": "openBrowser"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools" 
+            ]
+        }
+    }
+}
