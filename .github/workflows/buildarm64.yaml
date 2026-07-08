@@ -1,36 +1,62 @@
-name: Build Debian Trixie Live ISO
+name: Build LIKEALINUX Kiryu ARM64 ISO (GNU Coreutils)
 
 on:
   push:
+    branches: [ "main", "arm64-v0"]
+  pull_request:
     branches: [ "main", "arm64-v0" ]
   workflow_dispatch:
 
 jobs:
-  build-iso:
-    # Switch from ubuntu-latest (which is x86_64) to the native ARM64 runner
-    runs-on: ubuntu-latest-arm64
+  build:
+    runs-on: ubuntu-24.04-arm
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            live-build \
-            debootstrap
+    - name: Ensure GNU Coreutils and Install Live Build Tooling
+      run: |
+        sudo apt-get update
+        # Explicitly ensure coreutils, GNU sed, grep, and tar are present
+        sudo apt-get install -y --reinstall coreutils sed grep tar findutils
+        sudo apt-get install -y live-build debootstrap distro-info-data
 
-      - name: Run Build Script
-        run: |
-          chmod +x ./lbbuildandclean.sh
-          
-          # Run the script directly without needing foreign architecture overrides
-          sudo ./lbbuildandclean.sh
+    - name: Configure and Build ISO
+      run: |
+        # Clean any previous artifact traces using GNU rm
+        sudo lb clean --purge
+        sudo rm -rf .build/
 
-      - name: Upload ISO Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: LIKEALINUX_Kiryu-ISO
-          path: |
-            *.iso
-            live-build-dir/*.iso
+        # Run your exact live-build configuration
+        sudo lb config \
+          --distribution trixie \
+          -a arm64 \
+          --apt-recommends true \
+          --chroot-squashfs-compression-type zstd \
+          --mirror-chroot-security https://security.debian.org/debian-security/ \
+          --mirror-binary https://deb.debian.org/debian/ \
+          --mirror-bootstrap https://deb.debian.org/debian/ \
+          --image-name LIKEALINUX_Kiryu \
+          --updates true \
+          --firmware-chroot true \
+          --linux-flavours "arm64" \
+          --archive-areas "main contrib non-free non-free-firmware" \
+          --iso-application "KazumaKiryu" \
+          --iso-publisher "pbk123461" \
+          --iso-volume "LIKEALINUX0" \
+          --binary-images iso-hybrid \
+          --system live \
+          --bootappend-live "boot=live components quiet splash username=kiryulive hostname=LikeALinux" \
+          --hdd-label "DojimaHQ" \
+          --build-with-chroot true 
+
+        # Execute the build utilizing the host's GNU tools for the environment creation
+        sudo lb build
+
+    - name: Upload Finished ISO
+      uses: actions/upload-artifact@v4
+      with:
+        name: LIKEALINUX_Kiryu-ARM64-ISO
+        path: "*.iso"
+        if-no-files-found: error
