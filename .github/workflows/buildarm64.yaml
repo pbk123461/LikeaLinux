@@ -28,16 +28,14 @@ jobs:
         sudo lb clean --purge
         sudo rm -rf .build/
 
-        # Corrected live-build configuration flags
+        # Core live-build configuration (unrecognized flags removed)
         sudo lb config \
           --distribution trixie \
           -a arm64 \
           --apt-recommends true \
-          --squashfs-compression-type zstd \
           --mirror-chroot-security https://security.debian.org/debian-security/ \
           --mirror-binary https://deb.debian.org/debian/ \
           --mirror-bootstrap https://deb.debian.org/debian/ \
-          -o LIKEALINUX_Kiryu \
           --firmware-chroot true \
           --linux-flavours "arm64" \
           --archive-areas "main contrib non-free non-free-firmware" \
@@ -52,6 +50,18 @@ jobs:
 
         # Execute the build
         sudo lb build
+
+        # Rename the generated ISO to your custom name
+        echo "Renaming ISO output..."
+        sudo mv *.iso LIKEALINUX_Kiryu-arm64.iso
+
+    - name: Upload Finished ISO
+      uses: actions/upload-artifact@v4
+      with:
+        name: LIKEALINUX_Kiryu-ARM64-ISO
+        # Target the explicitly renamed file
+        path: LIKEALINUX_Kiryu-arm64.iso
+        if-no-files-found: error
 
     - name: Upload Finished ISO
       uses: actions/upload-artifact@v4
