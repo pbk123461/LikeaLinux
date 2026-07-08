@@ -17,47 +17,60 @@ jobs:
 
     - name: Build ISO inside Debian Container
       run: |
-        # Run a privileged Debian Trixie container to build the ISO
+        # 1. Capture host user details so we can fix permissions later
+        HOST_UID=$(id -u)
+        HOST_GID=$(id -g)
+
+        # 2. Run a privileged Debian Trixie container to build the ISO
         docker run --privileged --rm \
           -v ${{ github.workspace }}:/workspace \
           -w /workspace \
           debian:trixie-slim bash -c "
-            # 1. Install required build tools inside the container
+            # Install required build tools inside the container
             apt-get update && apt-get install -y live-build debootstrap distro-info-data
 
-            # 2. Clean up any previous runs
+            # Clean up any previous runs
             lb clean --purge
             rm -rf .build/
 
-            # 3. Configure the live environment
+            # Configure the live environment (corrected for Debian Trixie)
             lb config \
-            --distribution trixie \
-            -a arm64 \
-            --apt-recommends true \
-            --chroot-squashfs-compression-type zstd \
-            --mirror-chroot-security https://security.debian.org/debian-security/ \
-            --mirror-binary https://deb.debian.org/debian/ \
-            --mirror-bootstrap https://deb.debian.org/debian/ \
-            --image-name LIKEALINUX_Kiryu \
-            --updates true \
-            --firmware-chroot true \
-            --linux-flavours "arm64" \
-            --archive-areas "main contrib non-free non-free-firmware" \
-            --iso-application "KazumaKiryu" \
-            --iso-publisher "pbk123461" \
-            --iso-volume "LIKEALINUX0" \
-            --binary-images iso-hybrid \
-            --system live \
-            --bootappend-live "boot=live components quiet splash username=kiryulive hostname=LikeALinux" \
-            --hdd-label "DojimaHQ" \
-            --build-with-chroot true 
+              --distribution trixie \
+              -a arm64 \
+              --apt-recommends true \
+              --mirror-binary https://deb.debian.org/debian/ \
+              --mirror-bootstrap https://deb.debian.org/debian/ \
+              --security false \
+              --updates false \
+              --backports false \
+              --firmware-chroot true \
+              --linux-flavours 'arm64' \
+              --archive-areas 'main contrib non-free non-free-firmware' \
+              --iso-application 'KazumaKiryu' \
+              --iso-publisher 'pbk123461' \
+              --iso-volume 'LIKEALINUX0' \
+              --binary-images iso-hybrid \
+              --system live \
+              --bootappend-live 'boot=live components quiet splash username=kiryulive hostname=LikeALinux' \
+              --hdd-label 'DojimaHQ' \
+              --build-with-chroot true 
 
-            # 4. Run the build
+            # Run the build toolchain
             lb build
 
-            # 5. Rename output artifact inside the workspace
-            echo 'Renaming ISO output...'
-            mv *.iso LIKEALINUX_Kiryu-arm64.iso
+            # Pass workspace file ownership back to the host user so GitHub can read it
+            echo 'Fixing file permissions...'
+            chown -R $HOST_UID:$HOST_GID /workspace
+
+            # Safely catch, locate, and rename the output ISO file inside the container context
+            ISO_NAME=\$(ls *.iso 2>/dev/null | head -n 1)
+            if [ -n \"\$ISO_NAME\" ]; then
+                echo \"Renaming \$ISO_NAME to LIKEALINUX_Kiryu-arm64.iso\"
+                mv \"\$ISO_NAME\" LIKEALINUX_Kiryu-arm64.iso
+            else
+                echo 'ERROR: live-build failed to generate an ISO file!'
+                exit 1
+            fi
           "
 
     - name: Upload Finished ISO
