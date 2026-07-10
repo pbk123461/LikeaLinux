@@ -12,6 +12,14 @@ jobs:
     runs-on: ubuntu-24.04-arm
 
     steps:
+    - name: Check Github Actions Runtime
+      run: |
+        echo "Running on $(uname -a)"
+        echo "Current user: $(whoami)"
+        echo "Current directory: $(pwd)"
+        echo "Listing files in current directory:"
+        ls -alh
+        
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
