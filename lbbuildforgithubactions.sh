@@ -1,7 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 
-# 1. Clean up completely
-mkdir -p live-build-dir
+repo_root="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+cd "$repo_root"
 cd live-build-dir
 lb clean --purge
 rm -rf .build/

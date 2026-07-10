@@ -10,4 +10,4 @@ Icon=install-debian
 Terminal=false
 Categories=Qt;System;
 StartupWMClass=calamares
-StartupNotify=True
+StartupNotify=true

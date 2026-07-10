@@ -67,12 +67,12 @@ fun DisplayQuestionCallback(prompt, entry) {
 Plymouth.SetDisplayQuestionFunction(DisplayQuestionCallback);
 
 //------------------------------------- Password prompt -------------------------------
-fun DisplayPasswordCallback(nil, bulletCount) {
+fun DisplayPasswordCallback(passwordPrompt, bulletCount) {
     state.status = "pause";
     totalWidth = bulletCount * bullet.image.GetWidth();
     startPos = screen.half.w - totalWidth / 2;
 
-    prompt.image = Image.Text("Enter Password", 1, 1, 1);
+    prompt.image = Image.Text(passwordPrompt, 1, 1, 1);
     prompt.sprite = Sprite(prompt.image);
     prompt.sprite.SetX(screen.half.w - prompt.image.GetWidth() / 2);
     prompt.sprite.SetY(screen.h - 4 * prompt.image.GetHeight());
