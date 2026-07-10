@@ -57,8 +57,6 @@ unzip \
 binutils \
 file \
 libvpx9 \
-libvpx7 \
-libvpx6 \
 libstdc++6 \
 libgcc-s1 \
 libgtk2.0-0 \
