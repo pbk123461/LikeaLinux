@@ -1,6 +1,6 @@
 {
-    "name": "Linux Distro Testing Lab",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "name": "Linux Distro Testing Lab (Debian ARM64)",
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
     "features": {
         // Automatically installs and configures KasmVNC for a desktop GUI
         "ghcr.io/devcontainers/features/desktop-lite:1": {
