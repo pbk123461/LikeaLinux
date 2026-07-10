@@ -16,9 +16,17 @@
 
 #       Per https://github.com/AndreRH/hangover/releases/tag/hangover-11.9
 
-#
+# thanks to https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/ 
+
+# thanks to the Hangover Wine project:
 
 # Creates KDE desktop shortcuts and /usr/local/bin wrappers.
+
+# Refined By AI
+
+# The prompt used "https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/  use this website to refine the script for this debian based linux arm64 with steam. - I want to have desktop shortcuts (uses KDE) - I want to use Hangover WINE https://github.com/AndreRH/hangover/releases/tag/hangover-11.9 from releases, DO NOT COMPILE IT ULTRATHINK the best way to do this and make sure it works for debian 13 trixie" 
+
+# This script is manually checked and edited by me and was expanded from a script i made, but I am not responsible for any issues that may arise from using this script. Use at your own risk.
 
 #
 
@@ -340,9 +348,9 @@ case "${ID}:${VERSION_CODENAME}" in
 
     *)
 
-        echo "WARN: no Hangover build for ${ID}:${VERSION_CODENAME}, falling back to debian12_bookworm tarball" >&2
+        echo "WARN: no Hangover build for ${ID}:${VERSION_CODENAME}, falling back to debian13_trixie tarball" >&2
 
-        HANGOVER_TAR="hangover_11.9_debian12_bookworm_arm64.tar"
+        HANGOVER_TAR="hangover_11.9_debian13_trixie_arm64.tar"
 
         ;;
 
