@@ -111,6 +111,8 @@ apt-get install -y --no-install-recommends \
 
     ca-certificates curl wget unzip binutils file \
 
+    libvpx9 \
+
     libgtk2.0-0 libgtk2.0-common libgtk-3-0 libglib2.0-0 \
 
     libgl1 libglx0 libegl1 libgbm1 libgles2 \
@@ -348,9 +350,9 @@ case "${ID}:${VERSION_CODENAME}" in
 
     *)
 
-        echo "WARN: no Hangover build for ${ID}:${VERSION_CODENAME}, falling back to debian13_trixie tarball" >&2
+        echo "WARN: no Hangover build for ${ID}:${VERSION_CODENAME}, falling back to debian12_bookworm tarball" >&2
 
-        HANGOVER_TAR="hangover_11.9_debian13_trixie_arm64.tar"
+        HANGOVER_TAR="hangover_11.9_debian12_bookworm_arm64.tar"
 
         ;;
 
@@ -885,3 +887,4 @@ First-time Steam use:
 
 
 SUMMARY_EOF
+
