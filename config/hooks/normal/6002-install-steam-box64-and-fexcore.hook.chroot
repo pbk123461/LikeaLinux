@@ -1,3 +1,8 @@
+
+hook-chroot-steam-armada-bootstrap.sh
+
+Download
+
 #!/bin/bash
 
 #
@@ -18,7 +23,14 @@
 
 #
 
-# Thanks to the armada os project for the original script, which was used for this script.
+# Thanks to the armadaos project for the original script.
+
+# Debian live-build chroot. Builds a fully populated ARM64 Steam tree by
+
+# running Steam once headless under Xvfb, so the live user never has to
+
+# wait through the first-run download dance.
+
 #
 
 # Target: Debian 13 trixie, arm64/aarch64
@@ -154,7 +166,21 @@ ln -sfn ../.local/share/Steam/ubuntu12_64 "${DOT_STEAM}/bin64"
 
 steam_manifest="${STEAM}/package/${STEAM_ARM_MANIFEST_NAME}.manifest"
 
-curl -fsSL -o "${steam_manifest}" "${STEAM_ARM_MANIFEST_URL}"
+echo ">>> Fetching Steam ARM manifest from ${STEAM_ARM_MANIFEST_URL}"
+
+curl -fsSL -o "${steam_manifest}" "${STEAM_ARM_MANIFEST_URL}" || {
+
+    echo "ERROR: failed to download Steam ARM manifest from ${STEAM_ARM_MANIFEST_URL}" >&2
+
+    echo "       Valve may have rotated or changed this URL. Check:" >&2
+
+    echo "       https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/" >&2
+
+    exit 1
+
+}
+
+echo "    -> manifest size: $(stat -c%s "${steam_manifest}" 2>/dev/null || wc -c < "${steam_manifest}") bytes"
 
 
 steam_seed_package=$(
@@ -174,22 +200,71 @@ match = re.search(r'bins_linuxarm64_linuxarm64\.zip\.(?!vz\.)[^"\s]+', manifest)
 
 if not match:
 
-    raise SystemExit("failed to find ARM64 Steam seed package")
+    print("ERROR: failed to find ARM64 Steam seed package in manifest", file=sys.stderr)
+
+    print("First 500 chars of manifest for debugging:", file=sys.stderr)
+
+    print(manifest[:500], file=sys.stderr)
+
+    sys.exit(2)
 
 print(match.group(0))
 
 PY
 
-)
+) || {
+
+    echo "ERROR: python parser failed to extract seed package name from manifest" >&2
+
+    echo "       The Valve manifest format may have changed. Manifest content:" >&2
+
+    head -c 1000 "${steam_manifest}" >&2
+
+    echo >&2
+
+    exit 1
+
+}
+
+
+if [[ -z "${steam_seed_package}" ]]; then
+
+    echo "ERROR: steam_seed_package is empty; manifest may be malformed" >&2
+
+    head -c 500 "${steam_manifest}" >&2
+
+    echo >&2
+
+    exit 1
+
+fi
 
 
 echo ">>> Steam seed package: ${steam_seed_package}"
 
 curl -fsSL -o "${STEAM}/package/${steam_seed_package}" \
 
-    "${STEAM_ARM_CDN}/${steam_seed_package}"
+    "${STEAM_ARM_CDN}/${steam_seed_package}" || {
 
-unzip -q -o "${STEAM}/package/${steam_seed_package}" -d "${STEAM}"
+    echo "ERROR: failed to download seed package ${steam_seed_package} from Valve CDN" >&2
+
+    echo "       URL: ${STEAM_ARM_CDN}/${steam_seed_package}" >&2
+
+    exit 1
+
+}
+
+unzip -q -o "${STEAM}/package/${steam_seed_package}" -d "${STEAM}" || {
+
+    echo "ERROR: unzip failed on ${STEAM}/package/${steam_seed_package}" >&2
+
+    echo "       File may be corrupted or have an unexpected layout" >&2
+
+    file "${STEAM}/package/${steam_seed_package}" >&2
+
+    exit 1
+
+}
 
 
 # Make ELF binaries and shell/python scripts executable (Steam expects +x)
@@ -679,24 +754,80 @@ apt install -y --no-install-recommends python3-pip squashfuse fuse
 
 # The FEX install script (Debian 13 trixie is supported as of recent FEX builds)
 
+echo ">>> Downloading FEX-Emu installer..."
+
 curl --retry 3 --retry-delay 2 -fsSL \
 
     https://raw.githubusercontent.com/FEX-Emu/FEX/main/Scripts/InstallFEX.py \
 
-    | python3 - --install-username root --branch main --stable
+    -o /tmp/InstallFEX.py || {
+
+    echo "ERROR: failed to download FEX installer from GitHub" >&2
+
+    exit 1
+
+}
+
+echo "    -> running FEX installer (this may take a minute)..."
+
+python3 /tmp/InstallFEX.py --install-username root --stable < /dev/null || {
+
+    FEX_RC=$?
+
+    echo "ERROR: FEX installer exited with code ${FEX_RC}" >&2
+
+    echo "       FEX is optional; continuing without it." >&2
+
+    FEX_INSTALL_FAILED=1
+
+}
+
+rm -f /tmp/InstallFEX.py
+
+if [[ "${FEX_INSTALL_FAILED:-0}" == "1" ]]; then
+
+    echo "WARN: skipping FEX rootfs download + config (FEX install failed)" >&2
+
+    SKIP_FEX=1
+
+fi
 
 
 # Grab the Arch Linux rootfs so FEX can run x86 binaries
 
-mkdir -p /usr/share/fex-emu/RootFS
+if [[ "${SKIP_FEX:-0}" != "1" ]]; then
 
-ARCH_ROOTFS_URL="https://rootfs.fex-emu.gg/ArchLinux/2026-01-08/ArchLinux.sqsh"
+    mkdir -p /usr/share/fex-emu/RootFS
 
-ARCH_ROOTFS_SHA256="cb059973b7953ad9165845529655189b96f9a174b14a6a149c87ec884b0c5e90"
+    ARCH_ROOTFS_URL="https://rootfs.fex-emu.gg/ArchLinux/2026-01-08/ArchLinux.sqsh"
 
-curl --retry 3 --retry-delay 2 -fsSL -o /usr/share/fex-emu/RootFS/ArchLinux.sqsh "${ARCH_ROOTFS_URL}"
+    ARCH_ROOTFS_SHA256="cb059973b7953ad9165845529655189b96f9a174b14a6a149c87ec884b0c5e90"
 
-echo "${ARCH_ROOTFS_SHA256}  /usr/share/fex-emu/RootFS/ArchLinux.sqsh" | sha256sum -c -
+    echo ">>> Downloading FEX Arch rootfs (~500MB)..."
+
+    curl --retry 3 --retry-delay 2 -fsSL -o /usr/share/fex-emu/RootFS/ArchLinux.sqsh "${ARCH_ROOTFS_URL}" || {
+
+        echo "WARN: failed to download FEX rootfs; FEX will need a rootfs at runtime" >&2
+
+        SKIP_FEX=1
+
+    }
+
+    if [[ "${SKIP_FEX:-0}" != "1" ]]; then
+
+        echo "${ARCH_ROOTFS_SHA256}  /usr/share/fex-emu/RootFS/ArchLinux.sqsh" | sha256sum -c - || {
+
+            echo "WARN: FEX rootfs SHA256 mismatch; removing" >&2
+
+            rm -f /usr/share/fex-emu/RootFS/ArchLinux.sqsh
+
+            SKIP_FEX=1
+
+        }
+
+    fi
+
+fi
 
 
 # /usr/share config stays user-overridable; ~/.fex-emu would mask it.
@@ -1197,3 +1328,4 @@ echo " KDE:   Steam in Games menu"
 echo " Shell: steam-arm64"
 
 echo "================================================================"
+
