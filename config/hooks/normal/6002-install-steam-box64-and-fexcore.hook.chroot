@@ -1,567 +1,1199 @@
 #!/bin/bash
+
 #
+
 # thanks to https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/ 
+
 # thanks to the Hangover Wine project:
+
+# thanks to https://github.comubl-sailfishos/mer / mer-kernel-checker style robust bootstrap
+
 # Creates KDE desktop shortcuts and /usr/local/bin wrappers.
+
 # Refined By AI
+
 # The prompt used "https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/  use this website to refine the script for this debian based linux arm64 with steam. - I want to have desktop shortcuts (uses KDE) - I want to use Hangover WINE https://github.com/AndreRH/hangover/releases/tag/hangover-11.9 from releases, DO NOT COMPILE IT ULTRATHINK the best way to do this and make sure it works for debian 13 trixie" 
+
 # This script is manually checked and edited by me and was expanded from a script i made, but I am not responsible for any issues that may arise from using this script. Use at your own risk.
+
 #
+
+# Thanks to the armada os project for the original script, which was used for this script.
+#
+
+# Target: Debian 13 trixie, arm64/aarch64
+
+#
+
 set -euo pipefail
 
-# ============================================================
-# CONFIGURATION — update STEAM_ARM_URL if Valve rotates the hash
-# ============================================================
-# Default is the May 5/26 build. The hash in the URL is rotated by Valve
-# periodically. If the chroot download fails, check interfacinglinux.com
-# for the current URL and update this value, or override via env:
-#   STEAM_ARM_URL="https://..." lb config && lb build
-STEAM_ARM_URL="${STEAM_ARM_URL:-https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.0f11199e9a58a0ec4aab3833152ada1b2e56c846}"
-
-HANGOVER_VERSION="hangover-11.9"
-
-OPT_STEAM="/opt/steam-arm64"
-OPT_HANGOVER="/opt/hangover"
-DESKTOP_DIR="/usr/share/applications"
-WRAPPER_DIR="/usr/local/bin"
-PIXMAPS_DIR="/usr/share/pixmaps"
 
 # ============================================================
-# Sanity checks
+
+# 1. Architecture & distro sanity
+
 # ============================================================
-ARCH="$(uname -m)"
-if [ "${ARCH}" != "aarch64" ] && [ "${ARCH}" != "arm64" ]; then
-    echo "ERROR: this hook only supports arm64/aarch64 (you are on ${ARCH})" >&2
+
+if [[ "$(uname -m)" != "aarch64" ]]; then
+
+    echo "ERROR: ARM Steam bootstrap must run on aarch64 (got $(uname -m))" >&2
+
     exit 1
+
 fi
+
 
 . /etc/os-release
-echo "================================================================"
-echo " Native Steam ARM64 + Hangover Wine chroot build"
-echo " Distro:  ${ID} ${VERSION_CODENAME} (${VERSION_ID})"
-echo " Arch:    ${ARCH}"
-echo " Steam:   ${STEAM_ARM_URL}"
-echo "================================================================"
+
+if [[ "${ID}" != "debian" ]]; then
+
+    echo "WARN: this script targets Debian (trixie); running on ${ID}" >&2
+
+fi
+
 
 # ============================================================
-# 1. Install Debian packages
-# ============================================================
-apt-get update -qq
 
-# Core Steam ARM64 client runtime deps
+# 2. Configuration
+
+# ============================================================
+
+STEAM_BOOTSTRAP_HOME="${STEAM_BOOTSTRAP_HOME:-/var/lib/armada/steam-bootstrap-home}"
+
+STEAM="${STEAM_BOOTSTRAP_HOME}/.local/share/Steam"
+
+DOT_STEAM="${STEAM_BOOTSTRAP_HOME}/.steam"
+
+
+STEAM_ARM_RUNTIME_URL="https://repo.steampowered.com/steamrt3c/images/latest-public-beta/steam-runtime-steamrt-arm64.tar.xz"
+
+STEAM_ARM_CHANNEL="steamdeck_publicbeta"
+
+STEAM_ARM_CDN="https://client-update.steamstatic.com"
+
+STEAM_ARM_MANIFEST_NAME="steam_client_${STEAM_ARM_CHANNEL}_linuxarm64"
+
+STEAM_ARM_MANIFEST_URL="${STEAM_ARM_CDN}/${STEAM_ARM_MANIFEST_NAME}"
+
+STEAM_BOOTSTRAP_TIMEOUT="${STEAM_BOOTSTRAP_TIMEOUT:-900}"
+
+
+# ============================================================
+
+# 3. Install Debian deps for the bootstrap itself
+
+#    (xvfb + python3 + unzip — the Steam runtime deps come from
+
+#     a separate apt install for the live system)
+
+# ============================================================
+
+apt update -qq
+
 apt install -y --no-install-recommends \
-ca-certificates \
-curl \
-wget \
+
+python3 \
+
 unzip \
-binutils \
+
+curl \
+
+ca-certificates \
+
+xz-utils \
+
 file \
+
+xvfb \
+
+x11-utils \
+
+coreutils \
+
+libibus-1.0-0
+
+
+# ============================================================
+
+# 4. Clean and stage the bootstrap home
+
+# ============================================================
+
+rm -rf "${STEAM_BOOTSTRAP_HOME}"
+
+mkdir -p "${STEAM}/package" "${DOT_STEAM}"
+
+
+# Publicbeta channel marker (the magic that makes Steam fetch the ARM packages)
+
+echo "${STEAM_ARM_CHANNEL}" > "${STEAM}/package/beta"
+
+
+# Symlinks Steam expects to find
+
+ln -sfn ../.local/share/Steam "${DOT_STEAM}/steam"
+
+ln -sfn ../.local/share/Steam "${DOT_STEAM}/root"
+
+ln -sfn ../.local/share/Steam/linux32 "${DOT_STEAM}/sdk32"
+
+ln -sfn ../.local/share/Steam/linux64 "${DOT_STEAM}/sdk64"
+
+ln -sfn ../.local/share/Steam/linuxarm64 "${DOT_STEAM}/sdkarm64"
+
+ln -sfn ../.local/share/Steam/ubuntu12_32 "${DOT_STEAM}/bin32"
+
+ln -sfn ../.local/share/Steam/ubuntu12_64 "${DOT_STEAM}/bin64"
+
+
+# ============================================================
+
+# 5. Download the bootstrap manifest and the seed package
+
+# ============================================================
+
+steam_manifest="${STEAM}/package/${STEAM_ARM_MANIFEST_NAME}.manifest"
+
+curl -fsSL -o "${steam_manifest}" "${STEAM_ARM_MANIFEST_URL}"
+
+
+steam_seed_package=$(
+
+    python3 - "${steam_manifest}" <<'PY'
+
+import pathlib
+
+import re
+
+import sys
+
+
+manifest = pathlib.Path(sys.argv[1]).read_text(errors="ignore")
+
+match = re.search(r'bins_linuxarm64_linuxarm64\.zip\.(?!vz\.)[^"\s]+', manifest)
+
+if not match:
+
+    raise SystemExit("failed to find ARM64 Steam seed package")
+
+print(match.group(0))
+
+PY
+
+)
+
+
+echo ">>> Steam seed package: ${steam_seed_package}"
+
+curl -fsSL -o "${STEAM}/package/${steam_seed_package}" \
+
+    "${STEAM_ARM_CDN}/${steam_seed_package}"
+
+unzip -q -o "${STEAM}/package/${steam_seed_package}" -d "${STEAM}"
+
+
+# Make ELF binaries and shell/python scripts executable (Steam expects +x)
+
+python3 - "${STEAM}/package/${steam_seed_package}" "${STEAM}" <<'PY'
+
+import os
+
+import pathlib
+
+import stat
+
+import subprocess
+
+import sys
+
+import zipfile
+
+
+archive = pathlib.Path(sys.argv[1])
+
+steam = pathlib.Path(sys.argv[2])
+
+
+with zipfile.ZipFile(archive) as zf:
+
+    names = [info.filename for info in zf.infolist() if not info.is_dir()]
+
+
+for name in names:
+
+    path = (steam / name).resolve()
+
+    if not path.is_relative_to(steam.resolve()) or not path.is_file():
+
+        continue
+
+    result = subprocess.run(
+
+        ["file", "-b", str(path)],
+
+        check=False,
+
+        text=True,
+
+        stdout=subprocess.PIPE,
+
+    )
+
+    if "interpreter /lib/ld-linux" not in result.stdout and not result.stdout.startswith(
+
+        ("POSIX shell script", "Python script")
+
+    ):
+
+        continue
+
+    mode = path.stat().st_mode
+
+    os.chmod(path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+PY
+
+
+# ============================================================
+
+# 6. Download and extract the Steam Linux Runtime 3 (arm64)
+
+# ============================================================
+
+curl -fsSL -o /tmp/steam-runtime-steamrt-arm64.tar.xz "${STEAM_ARM_RUNTIME_URL}"
+
+tar -xJf /tmp/steam-runtime-steamrt-arm64.tar.xz -C "${STEAM}"
+
+rm -f /tmp/steam-runtime-steamrt-arm64.tar.xz
+
+
+# libibus shim — some games need it and it's not in the live system's lib dir
+
+steam_arm_ibus=$(
+
+    find "${STEAM}/steam-runtime-steamrt-arm64" \
+
+        -path '*/files/lib/aarch64-linux-gnu/libibus-1.0.so.5.*' \
+
+        -type f |
+
+        sort |
+
+        tail -n1
+
+)
+
+if [[ -z "${steam_arm_ibus}" ]]; then
+
+    echo "ERROR: failed to find ARM64 Steam runtime libibus shim" >&2
+
+    exit 1
+
+fi
+
+mkdir -p "${STEAM}/lib/aarch64-linux-gnu"
+
+ln -sfn \
+
+    "../../${steam_arm_ibus#"${STEAM}/"}" \
+
+    "${STEAM}/lib/aarch64-linux-gnu/libibus-1.0.so.5"
+
+
+# Sanity: the seed should have produced a steamrtarm64/steam binary
+
+if [[ ! -f "${STEAM}/steamrtarm64/steam" ]]; then
+
+    echo "ERROR: ARM64 Steam seed did not install steamrtarm64/steam" >&2
+
+    exit 1
+
+fi
+
+
+# ============================================================
+
+# 7. Install Steam's runtime deps for the live system
+
+#    (trixie-correct: t64 suffixes where applicable)
+
+# ============================================================
+
+apt install -y --no-install-recommends \
+
+ca-certificates \
+
+curl \
+
+wget \
+
+unzip \
+
+binutils \
+
+file \
+
 libvpx9 \
+
 libstdc++6 \
+
 libgcc-s1 \
+
 libgtk2.0-0 \
+
 libgtk2.0-common \
+
 libgtk-3-0 \
+
 libglib2.0-0 \
+
 libgl1 \
+
 libglx0 \
+
 libegl1 \
+
 libgbm1 \
+
 libgles2 \
+
 libvulkan1 \
+
 mesa-vulkan-drivers \
+
 libdrm2 \
+
 libxkbcommon0 \
+
 libxkbcommon-x11-0 \
+
 libwayland-client0 \
+
 libwayland-server0 \
+
 libwayland-cursor0 \
+
 libwayland-egl1 \
+
 libdbus-1-3 \
+
 libudev1 \
+
 libinput10 \
+
 libxcb-cursor0 \
+
 libfontconfig1 \
+
 libfreetype6 \
+
 libpng16-16 \
+
 libsm6 \
+
 libice6 \
+
 libxtst6 \
+
 libnss3 \
+
 libnspr4 \
+
 libasound2 \
+
 libpulse0 \
+
 libxcomposite1 \
+
 libxdamage1 \
+
 libxrandr2 \
+
 libxinerama1 \
+
 libxcursor1 \
+
 libxi6 \
+
 libxext6 \
+
 libxfixes3 \
+
 libxrender1 \
+
 libx11-6 \
+
 libx11-xcb1 \
+
 libxxf86vm1 \
+
 libcups2 \
+
 libpcap0.8 \
+
 libfaudio0 \
+
 libusb-1.0-0 \
+
 libgssapi-krb5-2 \
+
 libpcre2-8-0 \
+
 libsdl2-2.0-0 \
+
 libsdl2-mixer-2.0-0
 
-# Hangover Wine runtime deps
-apt install -y --no-install-recommends \
-libwine \
-libwine-dev \
-libsystemd0 \
-libapparmor1 \
-libacl1 \
-libattr1 \
-libbsd0 \
-libgmp10 \
-libgnutls30 \
-libhogweed6 \
-libidn2-0 \
-libk5crypto3 \
-libkeyutils1 \
-libldap-2.6-0 \
-libnettle8 \
-libp11-kit0 \
-libsasl2-2 \
-libtasn1-6 \
-libunistring5
 
-# ============================================================
-# 2. libvpx symlink — needed for native Steam on Debian
-#    Per interfacinglinux.com post #386, step 5
-#    Version-agnostic: tries .9, .7, .6 in that order, falls back to any .so.*
-# ============================================================
-LIBVPX_DST="/usr/lib/aarch64-linux-gnu/libvpx.so.6"
-LIBVPX_DIR="/usr/lib/aarch64-linux-gnu"
-if [ ! -e "${LIBVPX_DST}" ]; then
-    # Try known versions first (trixie=9, bookworm=7, older=6)
-    for v in 9 7 6 8 5; do
-        if [ -e "${LIBVPX_DIR}/libvpx.so.${v}" ]; then
-            ln -s "${LIBVPX_DIR}/libvpx.so.${v}" "${LIBVPX_DST}"
-            echo ">>> Created libvpx symlink: libvpx.so.${v} -> libvpx.so.6"
-            break
-        fi
-    done
-    # If still not created, glob for any libvpx.so.*
-    if [ ! -e "${LIBVPX_DST}" ]; then
-        for src in "${LIBVPX_DIR}"/libvpx.so.*; do
-            if [ -e "${src}" ] && [ "$(basename "${src}")" != "libvpx.so.6" ]; then
-                ln -s "${src}" "${LIBVPX_DST}"
-                echo ">>> Created libvpx symlink: $(basename ${src}) -> libvpx.so.6"
-                break
-            fi
-        done
-    fi
-    if [ ! -e "${LIBVPX_DST}" ]; then
-        echo "WARN: no libvpx.so.* found in ${LIBVPX_DIR}; symlink skipped." >&2
-        echo "      Install libvpx9 (trixie), libvpx7 (bookworm), or libvpx6 (older)" >&2
-    fi
+# libvpx symlink — Steam runtime expects libvpx.so.6
+
+if [[ -f /usr/lib/aarch64-linux-gnu/libvpx.so.9 && ! -e /usr/lib/aarch64-linux-gnu/libvpx.so.6 ]]; then
+
+    ln -s /usr/lib/aarch64-linux-gnu/libvpx.so.9 /usr/lib/aarch64-linux-gnu/libvpx.so.6
+
 fi
 
-# ============================================================
-# 3. Download and install the native Steam ARM64 runtime
-# ============================================================
-echo ">>> Downloading Steam ARM64 runtime..."
-WORKDIR="$(mktemp -d)"
-cd "${WORKDIR}"
 
-download_ok=0
-for attempt in 1 2 3; do
-    if wget -q --timeout=60 --tries=1 -O bins_linuxarm64_linuxarm64.zip "${STEAM_ARM_URL}"; then
-        # The URL often has a hash suffix; the renamed file should be a real zip
-        if file bins_linuxarm64_linuxarm64.zip | grep -qi "Zip archive"; then
-            download_ok=1
-            break
-        fi
-        echo "    attempt ${attempt}: response was not a zip (likely 404 or HTML page), retrying..."
-        head -c 200 bins_linuxarm64_linuxarm64.zip; echo
-    else
-        echo "    attempt ${attempt}: wget failed, retrying..."
+# ============================================================
+
+# 8. Run Steam headless under Xvfb to populate the runtime
+
+#    This is the key step — it downloads all of Steam's runtime
+
+#    packages once at build time, so the user never waits.
+
+#    (Option A: Xvfb runs inside the chroot; the live-build chroot
+
+#     is a real Debian userspace, so Xvfb + GLX are available.)
+
+# ============================================================
+
+# Sanity: Xvfb must exist (we apt-installed it above, but double-check)
+
+command -v Xvfb >/dev/null 2>&1 || {
+
+    echo "ERROR: Xvfb not found. Did the apt install block run?" >&2
+
+    exit 1
+
+}
+
+command -v timeout >/dev/null 2>&1 || {
+
+    echo "ERROR: coreutils (timeout) not found." >&2
+
+    exit 1
+
+}
+
+
+Xvfb :99 -screen 0 1280x800x24 >/tmp/armada-steam-bootstrap-xvfb.log 2>&1 &
+
+xvfb_pid=$!
+
+# Make sure Xvfb gets killed even if a later command (or set -e) aborts
+
+trap 'kill "${xvfb_pid}" 2>/dev/null || true; wait "${xvfb_pid}" 2>/dev/null || true' EXIT INT TERM
+
+# Give Xvfb a moment to actually open the display
+
+for i in 1 2 3 4 5 6 7 8 9 10; do
+
+    if xdpyinfo -display :99 >/dev/null 2>&1; then
+
+        break
+
     fi
-    sleep 3
+
+    sleep 0.5
+
 done
 
-if [ "${download_ok}" -ne 1 ]; then
-    cat >&2 << EOF
+if ! xdpyinfo -display :99 >/dev/null 2>&1; then
 
-ERROR: Could not download Steam ARM64 runtime from:
-    ${STEAM_ARM_URL}
+    echo "ERROR: Xvfb failed to open display :99" >&2
 
-Valve rotates the hash in the URL periodically. Get the current one at:
-    https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/
+    tail -n 20 /tmp/armada-steam-bootstrap-xvfb.log >&2 || true
 
-Re-run with the current URL:
-    STEAM_ARM_URL="https://client-update.steamstatic.com/bins_linuxarm64_linuxarm64.zip.<NEWHASH>" $0
-EOF
-    rm -rf "${WORKDIR}"
     exit 1
+
 fi
 
-# Unzip. The archive's top-level folder MUST be named 'steamrtarm64'.
-unzip -q bins_linuxarm64_linuxarm64.zip
-if [ ! -d steamrtarm64 ]; then
-    echo "ERROR: 'steamrtarm64' folder not found in archive" >&2
-    echo "Archive contents:" >&2
-    ls -la
-    rm -rf "${WORKDIR}"
+
+export HOME="${STEAM_BOOTSTRAP_HOME}"
+
+export DISPLAY=:99
+
+export LD_LIBRARY_PATH="${STEAM}/steamrtarm64:${STEAM}/lib/aarch64-linux-gnu:${LD_LIBRARY_PATH:-}"
+
+
+installed_manifest="${STEAM}/package/${STEAM_ARM_MANIFEST_NAME}.installed"
+
+
+set +e
+
+timeout "${STEAM_BOOTSTRAP_TIMEOUT}" \
+
+    "${STEAM}/steamrtarm64/steam" \
+
+    -steamdeck \
+
+    -exitsteam \
+
+    >/tmp/armada-steam-bootstrap.stdout \
+
+    2>/tmp/armada-steam-bootstrap.stderr
+
+steam_rc=$?
+
+set -e
+
+
+if [[ "${steam_rc}" == "124" ]]; then
+
+    echo "ERROR: Steam bootstrap updater timed out" >&2
+
     exit 1
+
 fi
 
-# Install to /opt
-mkdir -p "${OPT_STEAM}"
-rm -rf "${OPT_STEAM}/steamrtarm64"
-cp -a steamrtarm64 "${OPT_STEAM}/"
-chmod -R u+rwX,go+rX "${OPT_STEAM}/steamrtarm64"
 
-# System copy of the publicbeta flag (the wrapper seeds it per-user on first run)
-mkdir -p "${OPT_STEAM}/package"
-echo "publicbeta" > "${OPT_STEAM}/package/beta"
+if [[ ! -x "${STEAM}/steamrtarm64/steam" || ! -f "${STEAM}/steamrtarm64/steamui.so" ]]; then
 
-# Extract an icon if the archive ships one
-ICON_SRC="$(find "${OPT_STEAM}/steamrtarm64" -maxdepth 4 \
-    \( -iname "steam.png" -o -iname "steam.svg" -o -iname "steam_icon*" \) \
-    2>/dev/null | head -1 || true)"
-if [ -n "${ICON_SRC}" ] && [ -e "${ICON_SRC}" ]; then
-    mkdir -p "${PIXMAPS_DIR}"
-    cp "${ICON_SRC}" "${PIXMAPS_DIR}/steam-arm64.png"
-    echo "    -> icon installed to ${PIXMAPS_DIR}/steam-arm64.png"
+    echo "ERROR: Steam bootstrap did not produce a complete ARM64 Steam tree" >&2
+
+    exit 1
+
 fi
 
-rm -rf "${WORKDIR}"
-echo "    -> Steam ARM64 runtime installed to ${OPT_STEAM}/steamrtarm64"
 
-# ============================================================
-# 2b. Sanity check: verify all shared libraries the Steam binary needs
-#     are present in the chroot. Catches missing deps before the user does.
-# ============================================================
-echo ">>> Sanity-checking Steam binary shared library dependencies..."
-if [ -x "${OPT_STEAM}/steamrtarm64/steam" ]; then
-    missing="$(LD_LIBRARY_PATH="/usr/lib/aarch64-linux-gnu:${LD_LIBRARY_PATH:-}" \
-        ldd "${OPT_STEAM}/steamrtarm64/steam" 2>&1 | grep "not found" || true)"
-    if [ -n "${missing}" ]; then
-        echo "" >&2
-        echo "ERROR: Steam binary is missing shared libraries in the chroot:" >&2
-        echo "${missing}" >&2
-        echo "" >&2
-        echo "Add the corresponding -dev or main packages to the apt install" >&2
-        echo "block at the top of this hook and re-run." >&2
-        exit 1
-    else
-        echo "    -> all shared libraries resolved OK"
-    fi
-else
-    echo "WARN: ${OPT_STEAM}/steamrtarm64/steam not found or not executable; skipping ldd check" >&2
+if [[ ! -f "${installed_manifest}" ]]; then
+
+    echo "ERROR: Steam bootstrap produced no .installed manifest (last rc ${steam_rc})" >&2
+
+    echo "--- last bootstrap stdout (tail) ---" >&2
+
+    tail -n 30 /tmp/armada-steam-bootstrap.stdout >&2 || true
+
+    echo "--- last bootstrap stderr (tail) ---" >&2
+
+    tail -n 30 /tmp/armada-steam-bootstrap.stderr >&2 || true
+
+    exit 1
+
 fi
 
-# ============================================================
-# 4. Download and install Hangover Wine 11.9 (prebuilt)
-# ============================================================
-echo ">>> Installing Hangover Wine ${HANGOVER_VERSION}..."
-HANGOVER_BASE="https://github.com/AndreRH/hangover/releases/download/${HANGOVER_VERSION}"
 
-# Map distro/version to the matching prebuilt tarball
-case "${ID}:${VERSION_CODENAME}" in
-    debian:bookworm)   HANGOVER_TAR="hangover_11.9_debian12_bookworm_arm64.tar" ;;
-    debian:trixie)     HANGOVER_TAR="hangover_11.9_debian13_trixie_arm64.tar" ;;
-    ubuntu:jammy)      HANGOVER_TAR="hangover_11.9_ubuntu2204_jammy_arm64.tar" ;;
-    ubuntu:noble)      HANGOVER_TAR="hangover_11.9_ubuntu2404_noble_arm64.tar" ;;
-    ubuntu:questing)   HANGOVER_TAR="hangover_11.9_ubuntu2510_questing_arm64.tar" ;;
-    ubuntu:resolute)   HANGOVER_TAR="hangover_11.9_ubuntu2604_resolute_arm64.tar" ;;
-    *)
-        echo "WARN: no Hangover build for ${ID}:${VERSION_CODENAME}, falling back to debian12_bookworm tarball" >&2
-        HANGOVER_TAR="hangover_11.9_debian12_bookworm_arm64.tar"
-        ;;
+# ============================================================
+
+# 9. Strip runtime-only artefacts that shouldn't ship to the live ISO
+
+# ============================================================
+
+rm -rf \
+
+    "${STEAM}/logs" \
+
+    "${STEAM}/appcache/httpcache" \
+
+    "${STEAM}/appcache/cefdata" \
+
+    "${STEAM}/config/htmlcache"
+
+find "${STEAM_BOOTSTRAP_HOME}" \
+
+    \( -name '*.log' -o -name '*.pid' -o -name '*.token' -o -name '*.crash' \) \
+
+    -delete
+
+find "${STEAM_BOOTSTRAP_HOME}" \( -type s -o -type p \) -delete
+
+rm -f \
+
+    "${STEAM}/registry.vdf" \
+
+    "${STEAM}/ssfn"* \
+
+    "${DOT_STEAM}/registry.vdf" \
+
+    "${DOT_STEAM}/steam.pid" \
+
+    "${DOT_STEAM}/steam.token"
+
+
+# Steam opens Decky's localhost CEF debugger only when this marker exists
+
+touch "${STEAM}/.cef-enable-remote-debugging"
+
+
+# ============================================================
+
+# 9b. Box64 — x86_64 user-space emulator
+
+#     Used by Steam (via the gamescope / FEX path) and by any x86_64-only
+
+#     native Linux games. Installed from the ryanfortner apt repo.
+
+# ============================================================
+
+echo ">>> Installing Box64 (x86_64 emulator)..."
+
+apt install -y --no-install-recommends \
+
+wget \
+
+gnupg \
+
+ca-certificates
+
+
+# Add the ryanfortner box64-debs repo (GPG key + source list)
+
+wget -qO- https://ryanfortner.github.io/box64-debs/KEY.gpg \
+
+    | gpg --dearmor -o /usr/share/keyrings/box64-debs-archive-keyring.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/box64-debs-archive-keyring.gpg] https://ryanfortner.github.io/box64-debs/debian bookworm main" \
+
+    > /etc/apt/sources.list.d/box64.list
+
+apt update -qq
+
+apt install -y --no-install-recommends box64
+
+
+# ============================================================
+
+# 9c. FEX-Emu — x86 (32-bit) user-space emulator
+
+#     Used for x86 32-bit Windows games. Install via the official
+
+#     Python installer script (no compilation required for the user-mode bits).
+
+#     Installed system-wide so it's available to the live user too.
+
+# ============================================================
+
+echo ">>> Installing FEX-Emu..."
+
+apt install -y --no-install-recommends python3-pip squashfuse fuse
+
+# The FEX install script (Debian 13 trixie is supported as of recent FEX builds)
+
+curl --retry 3 --retry-delay 2 -fsSL \
+
+    https://raw.githubusercontent.com/FEX-Emu/FEX/main/Scripts/InstallFEX.py \
+
+    | python3 - --install-username root --branch main --stable
+
+
+# Grab the Arch Linux rootfs so FEX can run x86 binaries
+
+mkdir -p /usr/share/fex-emu/RootFS
+
+ARCH_ROOTFS_URL="https://rootfs.fex-emu.gg/ArchLinux/2026-01-08/ArchLinux.sqsh"
+
+ARCH_ROOTFS_SHA256="cb059973b7953ad9165845529655189b96f9a174b14a6a149c87ec884b0c5e90"
+
+curl --retry 3 --retry-delay 2 -fsSL -o /usr/share/fex-emu/RootFS/ArchLinux.sqsh "${ARCH_ROOTFS_URL}"
+
+echo "${ARCH_ROOTFS_SHA256}  /usr/share/fex-emu/RootFS/ArchLinux.sqsh" | sha256sum -c -
+
+
+# /usr/share config stays user-overridable; ~/.fex-emu would mask it.
+
+cat > /usr/share/fex-emu/Config.json <<'FEX_EOF'
+
+{
+
+  "Config": {
+
+    "RootFS": "ArchLinux.sqsh",
+
+    "TSOEnabled": "1",
+
+    "X87ReducedPrecision": "1",
+
+    "Multiblock": "0",
+
+    "VectorTSOEnabled": "0",
+
+    "MemcpySetTSOEnabled": "0",
+
+    "HalfBarrierTSOEnabled": "1",
+
+    "ThunkHostLibs": "/usr/lib64/fex-emu/HostThunks",
+
+    "ThunkGuestLibs": "/usr/share/fex-emu/GuestThunks"
+
+  },
+
+  "ThunksDB": {
+
+    "Vulkan": 1,
+
+    "GL": 1,
+
+    "EGL": 1,
+
+    "drm": 1,
+
+    "WaylandClient": 1,
+
+    "asound": 1
+
+  }
+
+}
+
+FEX_EOF
+
+
+# ============================================================
+
+# 9d. Hangover Wine 11.9 (prebuilt tarball)
+
+#     Windows compatibility layer for ARM64. Pre-built, no compile.
+
+#     Lives in /opt/hangover; wrapper at /usr/local/bin/hangover-wine.
+
+# ============================================================
+
+echo ">>> Installing Hangover Wine 11.9 (prebuilt)..."
+
+HANGOVER_BASE="https://github.com/AndreRH/hangover/releases/download/hangover-11.9"
+
+mkdir -p /opt/hangover
+
+
+# Pick the right tarball for this Debian release
+
+case "${VERSION_CODENAME:-trixie}" in
+
+    bookworm) HANGOVER_TAR="hangover_11.9_debian12_bookworm_arm64.tar" ;;
+
+    trixie)   HANGOVER_TAR="hangover_11.9_debian13_trixie_arm64.tar" ;;
+
+    *)        HANGOVER_TAR="hangover_11.9_debian13_trixie_arm64.tar" ;;
+
 esac
 
+
 WORKDIR="$(mktemp -d)"
+
 cd "${WORKDIR}"
-wget -q --timeout=120 -O hangover.tar      "${HANGOVER_BASE}/${HANGOVER_TAR}"
-wget -q --timeout=120 -O hangover-dlls.tar "${HANGOVER_BASE}/hangover_11.9_dlls.tar"
 
-rm -rf "${OPT_HANGOVER}"
-mkdir -p "${OPT_HANGOVER}"
-tar -xf hangover.tar      -C "${OPT_HANGOVER}"
-tar -xf hangover-dlls.tar -C "${OPT_HANGOVER}"
+curl --retry 3 --retry-delay 2 -fsSL -o hangover.tar      "${HANGOVER_BASE}/${HANGOVER_TAR}"
 
-# Make sure all the bundled binaries are executable
-find "${OPT_HANGOVER}" -type f \( -name "wine*" -o -name "hangover*" -o -name "wineboot" -o -name "wineserver" \) \
+curl --retry 3 --retry-delay 2 -fsSL -o hangover-dlls.tar "${HANGOVER_BASE}/hangover_11.9_dlls.tar"
+
+
+tar -xf hangover.tar      -C /opt/hangover
+
+tar -xf hangover-dlls.tar -C /opt/hangover
+
+find /opt/hangover -type f \( -name "wine*" -o -name "hangover*" -o -name "wineboot" -o -name "wineserver" \) \
+
     -exec chmod +x {} \; 2>/dev/null || true
 
-rm -rf "${WORKDIR}"
-echo "    -> Hangover installed to ${OPT_HANGOVER}"
+cd / && rm -rf "${WORKDIR}"
 
-# Pick up an icon from the tarball if present
-HANGOVER_ICON="$(find "${OPT_HANGOVER}" -maxdepth 4 \
+
+# Pull a wine icon from the tarball if one was shipped
+
+HANGOVER_ICON="$(find /opt/hangover -maxdepth 4 \
+
     \( -iname "wine.png" -o -iname "wine.svg" -o -iname "hangover*.png" -o -iname "hangover*.svg" \) \
+
     2>/dev/null | head -1 || true)"
-if [ -n "${HANGOVER_ICON}" ] && [ -e "${HANGOVER_ICON}" ]; then
-    mkdir -p "${PIXMAPS_DIR}"
-    cp "${HANGOVER_ICON}" "${PIXMAPS_DIR}/hangover-wine.png"
+
+if [[ -n "${HANGOVER_ICON}" && -e "${HANGOVER_ICON}" ]]; then
+
+    mkdir -p /usr/share/pixmaps
+
+    cp "${HANGOVER_ICON}" /usr/share/pixmaps/hangover-wine.png
+
 fi
 
-# ============================================================
-# 5. Wrapper scripts in /usr/local/bin
+
 # ============================================================
 
-# 5a. Steam ARM64 wrapper — first-run bootstrap + per-user setup
-cat > "${WRAPPER_DIR}/steam-arm64" << 'WRAPPER_EOF'
+# 9e. Hangover Wine runtime dependencies (trixie-correct)
+
+#     Most of these come transitively via libwine, but we list them
+
+#     explicitly so the build doesn't break on a future trixie bump.
+
+# ============================================================
+
+apt install -y --no-install-recommends \
+
+libwine \
+
+libwine-dev \
+
+libsystemd0 \
+
+libapparmor1 \
+
+libacl1 \
+
+libattr1 \
+
+libbsd0 \
+
+libgmp10 \
+
+libgnutls30t64 \
+
+libhogweed6t64 \
+
+libidn2-0 \
+
+libk5crypto3 \
+
+libkeyutils1 \
+
+libldap2 \
+
+libnettle8t64 \
+
+libp11-kit0 \
+
+libsasl2-2 \
+
+libtasn1-6 \
+
+libunistring5
+
+
+# ============================================================
+
+# 10. Symlink the bootstrapped tree into /opt/ so the live
+
+#     wrapper can find it on first user launch
+
+# ============================================================
+
+mkdir -p /opt/steam-arm64
+
+# Move the fully populated tree to /opt/steam-arm64/steam-bootstrap
+
+mv "${STEAM_BOOTSTRAP_HOME}" /opt/steam-arm64/steam-bootstrap
+
+ln -sfn /opt/steam-arm64/steam-bootstrap /var/lib/armada/steam-bootstrap-home
+
+
+# ============================================================
+
+# 11. Wrapper script — lazy-seeds $HOME on first launch
+
+# ============================================================
+
+cat > /usr/local/bin/steam-arm64 << 'WRAPPER_EOF'
+
 #!/bin/bash
+
 # Launch the native Steam ARM64 client (Valve beta).
-# On first run, seeds ~/.local/share/Steam/ from the system install.
-# Reference: https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/
+
+# Uses the pre-bootstrapped tree at /opt/steam-arm64/steam-bootstrap.
+
+# On first run, symlinks the tree into $HOME so Steam finds it.
+
 set -e
 
-USER_STEAM_DIR="${HOME}/.local/share/Steam"
-SYSTEM_STEAM_DIR="/opt/steam-arm64/steamrtarm64"
-SYSTEM_BETA_FILE="/opt/steam-arm64/package/beta"
 
-# First-run bootstrap: copy the runtime into the user's Steam dir
-if [ ! -e "${USER_STEAM_DIR}/steamrtarm64" ]; then
-    mkdir -p "${USER_STEAM_DIR}"
-    if [ -z "$(ls -A "${USER_STEAM_DIR}" 2>/dev/null)" ]; then
-        cp -a "${SYSTEM_STEAM_DIR}" "${USER_STEAM_DIR}/"
-    fi
-    # Publicbeta flag — tells Steam to fetch the ARM packages on first update
-    mkdir -p "${USER_STEAM_DIR}/package"
-    if [ ! -e "${USER_STEAM_DIR}/package/beta" ]; then
-        if [ -e "${SYSTEM_BETA_FILE}" ]; then
-            cp "${SYSTEM_BETA_FILE}" "${USER_STEAM_DIR}/package/beta"
-        else
-            echo "publicbeta" > "${USER_STEAM_DIR}/package/beta"
-        fi
-    fi
-    chmod -R u+rwX "${USER_STEAM_DIR}"
+USER_HOME="${HOME}"
+
+BOOTSTRAP_ROOT="/opt/steam-arm64/steam-bootstrap"
+
+USER_STEAM_DIR="${USER_HOME}/.local/share/Steam"
+
+USER_DOT_STEAM="${USER_HOME}/.steam"
+
+
+# First-run symlink: if the user doesn't have a Steam tree, point them
+
+# at the bootstrap. If they do (e.g. a different live session), leave it.
+
+if [[ ! -e "${USER_STEAM_DIR}" ]]; then
+
+    mkdir -p "$(dirname "${USER_STEAM_DIR}")"
+
+    ln -sfn "${BOOTSTRAP_ROOT}/.local/share/Steam" "${USER_STEAM_DIR}"
+
 fi
 
-# ~/.steam -> user Steam dir (Steam auto-detects either path)
-if [ ! -e "${HOME}/.steam" ]; then
-    ln -s "${USER_STEAM_DIR}" "${HOME}/.steam"
+if [[ ! -e "${USER_DOT_STEAM}" ]]; then
+
+    ln -sfn "${BOOTSTRAP_ROOT}/.steam" "${USER_DOT_STEAM}"
+
 fi
 
-# Steam Linux Runtime 4.0 ARM64 creates a 'linuxarm64' folder on first update.
-# Some games/Proton look for the SDK at ~/.steam/sdkarm64 — symlink it when it
-# appears so things "just work" without a manual ln.
-if [ -d "${USER_STEAM_DIR}/linuxarm64" ] && [ ! -e "${HOME}/.steam/sdkarm64" ]; then
-    ln -s "${USER_STEAM_DIR}/linuxarm64" "${HOME}/.steam/sdkarm64"
+
+# Publicbeta marker — re-create if missing
+
+mkdir -p "${USER_STEAM_DIR}/package"
+
+if [[ ! -e "${USER_STEAM_DIR}/package/beta" ]]; then
+
+    echo "steamdeck_publicbeta" > "${USER_STEAM_DIR}/package/beta"
+
 fi
 
-exec "${USER_STEAM_DIR}/steamrtarm64/steam" "$@"
+
+# The runtime libs
+
+export LD_LIBRARY_PATH="${BOOTSTRAP_ROOT}/.local/share/Steam/steamrtarm64:${BOOTSTRAP_ROOT}/.local/share/Steam/lib/aarch64-linux-gnu:${LD_LIBRARY_PATH:-}"
+
+
+exec "${BOOTSTRAP_ROOT}/.local/share/Steam/steamrtarm64/steam" "$@"
+
 WRAPPER_EOF
-chmod 0755 "${WRAPPER_DIR}/steam-arm64"
 
-# 5b. Hangover Wine wrapper
-cat > "${WRAPPER_DIR}/hangover-wine" << 'WRAPPER_EOF'
+chmod 0755 /usr/local/bin/steam-arm64
+
+
+# 11b. Hangover Wine wrapper — points at /opt/hangover binaries
+
+cat > /usr/local/bin/hangover-wine << 'HANGOVER_EOF'
+
 #!/bin/bash
-# Launch Hangover Wine on ARM64. Defaults to winecfg if no args given.
+
+# Launch Hangover Wine (Windows apps on ARM64). Defaults to winecfg.
+
 set -e
 
-if [ -d "/opt/hangover/usr" ]; then
-    HANGOVER_PREFIX="/opt/hangover/usr"
-elif [ -d "/opt/hangover" ]; then
-    HANGOVER_PREFIX="/opt/hangover"
+
+if [[ -d /opt/hangover/usr ]]; then
+
+    HANGOVER_PREFIX=/opt/hangover/usr
+
+elif [[ -d /opt/hangover ]]; then
+
+    HANGOVER_PREFIX=/opt/hangover
+
 else
+
     echo "ERROR: Hangover not found in /opt/hangover" >&2
+
     exit 1
+
 fi
+
 
 export PATH="${HANGOVER_PREFIX}/bin:${PATH}"
-export LD_LIBRARY_PATH="${HANGOVER_PREFIX}/lib:${HANGOVER_PREFIX}/lib/wine:${LD_LIBRARY_PATH:-}"
-export WINEDLLPATH="${HANGOVER_PREFIX}/lib/wine"
-export WINEPREFIX="${WINEPREFIX:-${HOME}/.wine}"
-export WINEESYNC=1
-export WINEFSYNC=1
-[ -d "/opt/hangover/dlls" ] && export HANGOVER_DLL_PATH="/opt/hangover/dlls"
 
-if [ $# -eq 0 ]; then
+export LD_LIBRARY_PATH="${HANGOVER_PREFIX}/lib:${HANGOVER_PREFIX}/lib/wine:${LD_LIBRARY_PATH:-}"
+
+export WINEDLLPATH="${HANGOVER_PREFIX}/lib/wine"
+
+export WINEPREFIX="${WINEPREFIX:-${HOME}/.wine}"
+
+export WINEESYNC=1
+
+export WINEFSYNC=1
+
+[[ -d /opt/hangover/dlls ]] && export HANGOVER_DLL_PATH=/opt/hangover/dlls
+
+
+if [[ $# -eq 0 ]]; then
+
     set -- winecfg
+
 fi
 
+
 exec "${HANGOVER_PREFIX}/bin/wine" "$@"
-WRAPPER_EOF
-chmod 0755 "${WRAPPER_DIR}/hangover-wine"
+
+HANGOVER_EOF
+
+chmod 0755 /usr/local/bin/hangover-wine
+
+
+# 11c. FEX wrapper convenience helper
+
+cat > /usr/local/bin/fex-bash << 'FEX_EOF'
+
+#!/bin/bash
+
+# Launch a shell inside FEX-Emu's x86 Arch Linux rootfs.
+
+# Useful for testing x86 binaries manually.
+
+exec FEXBash "$@"
+
+FEX_EOF
+
+chmod 0755 /usr/local/bin/fex-bash
+
 
 # ============================================================
-# 6. KDE desktop shortcuts
-# ============================================================
-mkdir -p "${DESKTOP_DIR}"
 
-# 6a. Native Steam ARM64
-cat > "${DESKTOP_DIR}/steam-arm64.desktop" << 'DESKTOP_EOF'
+# 12. KDE desktop shortcut
+
+# ============================================================
+
+mkdir -p /usr/share/applications
+
+cat > /usr/share/applications/steam-arm64.desktop << 'DESKTOP_EOF'
+
 [Desktop Entry]
+
 Version=1.0
+
 Type=Application
+
 Name=Steam
+
 GenericName=Game Launcher
-Comment=Native ARM64 Steam client (Valve beta) — first run prompts for login
+
+Comment=Native ARM64 Steam client (Valve beta) — runtime pre-bootstrapped
+
 Exec=steam-arm64 %U
-Icon=steam-arm64
+
+Icon=steam
+
 Terminal=false
+
 Categories=Game;Network;Application;
+
 StartupNotify=true
+
 StartupWMClass=steam
+
 Keywords=gaming;game;launcher;valve;steam;arm;
+
 MimeType=x-scheme-handler/steam;x-scheme-handler/steamurl;
+
 DESKTOP_EOF
 
-# 6b. Hangover Wine configuration
-cat > "${DESKTOP_DIR}/hangover-wine.desktop" << 'DESKTOP_EOF2'
+
+# 12b. Hangover Wine configuration shortcut
+
+cat > /usr/share/applications/hangover-wine.desktop << 'DESKTOP_EOF2'
+
 [Desktop Entry]
+
 Version=1.0
+
 Type=Application
+
 Name=Hangover Wine Configuration
+
 GenericName=Wine Configuration
+
 Comment=Configure Hangover Wine — run Windows apps on ARM64
+
 Exec=hangover-wine winecfg
+
 Icon=hangover-wine
+
 Terminal=false
+
 Categories=Utility;Settings;Application;
+
 StartupNotify=true
+
 Keywords=wine;windows;arm;hangover;configure;
+
 DESKTOP_EOF2
 
-# 6c. Hangover Notepad — smoke test
-cat > "${DESKTOP_DIR}/hangover-notepad.desktop" << 'DESKTOP_EOF3'
+
+# 12c. Hangover Wine notepad smoke test
+
+cat > /usr/share/applications/hangover-notepad.desktop << 'DESKTOP_EOF3'
+
 [Desktop Entry]
+
 Version=1.0
+
 Type=Application
+
 Name=Notepad (Hangover Wine)
+
 GenericName=Hangover Wine Test
+
 Comment=Verify Hangover Wine is working by launching Notepad
+
 Exec=hangover-wine notepad
+
 Icon=accessories-text-editor
+
 Terminal=false
+
 Categories=Utility;Application;
+
 StartupNotify=true
+
 Keywords=wine;windows;arm;hangover;test;
+
 DESKTOP_EOF3
 
-# ============================================================
-# 7. Seed /etc/skel for any future user account
-# ============================================================
-SKEL_PKG_DIR="/etc/skel/.local/share/Steam/package"
-mkdir -p "${SKEL_PKG_DIR}"
-echo "publicbeta" > "${SKEL_PKG_DIR}/beta"
+
+# 12d. FEX-Emu Arch rootfs shell shortcut
+
+cat > /usr/share/applications/fex-bash.desktop << 'DESKTOP_EOF4'
+
+[Desktop Entry]
+
+Version=1.0
+
+Type=Application
+
+Name=FEX-Emu (x86 Arch Shell)
+
+GenericName=x86 Compatibility Shell
+
+Comment=Open a shell in the FEX-Emu x86 Arch Linux rootfs — for running x86 binaries on ARM64
+
+Exec=konsole -e fex-bash
+
+Icon=utilities-terminal
+
+Terminal=false
+
+Categories=System;Utility;Application;
+
+StartupNotify=true
+
+Keywords=fex;x86;emulator;arch;arm;
+
+DESKTOP_EOF4
+
 
 # ============================================================
-# 8. README at /opt/steam-arm64/README
-# ============================================================
-cat > "${OPT_STEAM}/README" << 'README_EOF'
-Steam ARM64 + Hangover Wine — chroot-installed for live ISO
-===========================================================
 
-Steam ARM64 (native client, Valve beta)
----------------------------------------
-  System install:  /opt/steam-arm64/steamrtarm64
-  Per-user seed:   ~/.local/share/Steam/  (auto-created on first launch)
-  Wrapper:         /usr/local/bin/steam-arm64
-  Desktop entry:   "Steam" in KDE menu (Games)
-  Beta flag:       ~/.local/share/Steam/package/beta -> "publicbeta"
-                   This is the magic that makes Steam fetch the ARM packages.
-
-  First run:
-    1. Open Steam from the menu.
-    2. Log in (or create a new account) when prompted.
-    3. Wait. Steam will download a lot on first launch (1-2 GB) — this is
-       normal: the actual client, Steam Linux Runtime, etc. Let it finish.
-    4. Once Steam is up and stable, exit fully so the account config is
-       flushed to disk. Subsequent launches auto-load your account.
-
-  Steam Linux Runtime 4.0 ARM64 (the "linuxarm64" folder) gets created by
-  Steam itself on first update. The wrapper auto-creates the sdkarm64
-  symlink once it appears.
-
-  If you already had an x86 Steam install on this machine, see
-  interfacinglinux.com post #386 — the "log in once via BOX64/FEX-Emu"
-  step applies to you. For fresh live ISO users this is NOT needed.
-
-Hangover Wine 11.9 (prebuilt, no compile)
------------------------------------------
-  Install:         /opt/hangover
-  Wrapper:         /usr/local/bin/hangover-wine
-  Desktop entries: Hangover Wine Configuration, Notepad (Hangover Wine)
-
-  Usage:
-    hangover-wine winecfg                # configure Wine prefix
-    hangover-wine notepad                # test it works
-    hangover-wine /path/to/setup.exe     # install a Windows app
-    WINEPREFIX=~/.myapp hangover-wine myapp.exe
-
-Steam URL source
-----------------
-  https://interfacinglinux.com/community/sbcsoftware/native-steam-client-for-arm-linux/
-  The hash in the URL is rotated by Valve periodically. The current URL is
-  hard-coded in /workspace/hook-chroot-steam-arm64-hangover.sh (or wherever
-  you put the chroot hook). If Steam download fails in the future, update
-  STEAM_ARM_URL in the hook from the page above.
-
-Hangover release
-----------------
-  https://github.com/AndreRH/hangover/releases/tag/hangover-11.9
-
-Troubleshooting
----------------
-  Steam shows "Illegal instruction"   -> your CPU/kernel can't run the
-                                         new ARM64 client binaries. Try
-                                         running an older build, or use
-                                         BOX64/FEX-Emu + the x86 Steam.
-  Steam crashes on first launch        -> delete ~/.local/share/Steam and
-                                         let the wrapper re-seed it.
-  "libvpx.so.6 not found"               -> re-run the chroot hook; the
-                                         libvpx symlink in
-                                         /usr/lib/aarch64-linux-gnu/
-                                         should exist.
-  Games won't launch                    -> enable Proton for ARM64 in
-                                         Steam > Settings > Compatibility,
-                                         or install the Proton-ARM
-                                         archive from archive.org into
-                                         ~/.local/share/Steam/compatibilitytools.d/
-README_EOF
+# 13. Cleanup and report
 
 # ============================================================
-# 9. Cleanup
-# ============================================================
-apt-get clean
+
+apt clean
+
 rm -rf /var/lib/apt/lists/*
 
-# ============================================================
-# Summary
-# ============================================================
-cat << 'SUMMARY_EOF'
 
-================================================================
-  Build complete.
-================================================================
+package_count=$(find /opt/steam-arm64/steam-bootstrap/.local/share/Steam/package -maxdepth 1 -type f | wc -l)
 
-KDE application menu (re-login to refresh):
-  Games      ->  Steam                          (native ARM64 client)
-  Utilities  ->  Hangover Wine Configuration
-  Utilities  ->  Notepad (Hangover Wine)
+zipvz_count=$(find /opt/steam-arm64/steam-bootstrap/.local/share/Steam/package -maxdepth 1 -type f -name '*.zip.vz.*' | wc -l)
 
-Terminal:
-  steam-arm64              # launch native Steam
-  hangover-wine winecfg    # configure Wine
-  hangover-wine notepad    # smoke-test Wine
+echo "================================================================"
 
-System files:
-  Steam ARM64 runtime:     /opt/steam-arm64/steamrtarm64
-  Hangover Wine:           /opt/hangover
-  Wrappers:                /usr/local/bin/{steam-arm64,hangover-wine}
-  Desktop entries:         /usr/share/applications/
-  libvpx symlink:          /usr/lib/aarch64-linux-gnu/libvpx.so.6 -> .so.9
-  README:                  /opt/steam-arm64/README
+echo " Generated ARM64 Steam bootstrap:"
 
-First-time Steam use:
-  1. Open Steam from the menu.
-  2. Log in (or create an account) when prompted.
-  3. Wait for Steam to download its first-run packages (1-2 GB).
-  4. Exit Steam fully. Next launches are instant.
+echo "   ${package_count} package files"
 
-SUMMARY_EOF
+echo "   ${zipvz_count} compressed payloads"
+
+echo "   bootstrap updater rc ${steam_rc}"
+
+echo "   .installed manifest present"
+
+echo "================================================================"
+
+echo " Tree:  /opt/steam-arm64/steam-bootstrap"
+
+echo " KDE:   Steam in Games menu"
+
+echo " Shell: steam-arm64"
+
+echo "================================================================"
