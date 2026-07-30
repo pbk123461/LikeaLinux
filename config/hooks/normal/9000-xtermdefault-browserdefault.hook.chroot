@@ -2,23 +2,31 @@
 
 set -e
 
-update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/alacritty 50
+apt-get update
 
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://raw.githubusercontent.com/imputnet/helium-linux/main/pubkey.asc | gpg --dearmor -o /etc/apt/keyrings/helium.gpg
+echo "deb [signed-by=/etc/apt/keyrings/helium.gpg] https://pkg.helium.computer/deb stable main" > /etc/apt/sources.list.d/helium.list
+
+apt-get update
+apt-get install -y helium-bin
+
+update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/alacritty 50
 update-alternatives --set x-terminal-emulator /usr/bin/alacritty
 
 update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/helium 200
-
 update-alternatives --set x-www-browser /usr/bin/helium
 
-apt remove firefox-esr -y
+apt-get remove -y firefox-esr
 
-cat /etc/shells
-echo "$(which zsh)" >> /etc/shells
+ZSH_PATH="$(which zsh)"
 
-sudo chsh -s "$(which zsh)" root
-sudo chsh -s "/usr/bin/zsh" root
-chsh -s $(which zsh)
-chsh -s /usr/bin/zsh
+if ! grep -q "^${ZSH_PATH}$" /etc/shells; then
+    echo "$ZSH_PATH" >> /etc/shells
+fi
 
-echo $SHELL
+chsh -s "$ZSH_PATH" root
 
+if [ -n "$SUDO_USER" ]; then
+    chsh -s "$ZSH_PATH" "$SUDO_USER"
+fi
