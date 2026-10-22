@@ -27,6 +27,14 @@ This doesnt apply to this build because it is an alpha
 ### Downloads
 Download the latest build from [GitHub Actions](https://github.com/pbk123461/LikeaLinux/actions/runs/30504419948) in the artifacts section.
 
+### To Do
+- add arm steam and fexcore support
+- add waydroid support
+- add rpcs3 for arm
+- more optimizations
+
+NOTE: AI was only used for a few script which went unused anyway. So you dont have to worry about unstable software by AI
+
 ### Credits
 - Thank you https://github.com/sakibreza229/awesome-fastfetch for fastfetch theme
 - Thank you https://youtu.be/TLWDMoAa1Fg for the dragonfish font
