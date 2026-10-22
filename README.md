@@ -6,7 +6,7 @@ A yakuza themed debian based linux distro made with livebuild
 <img width="1600" height="828" alt="image" src="https://github.com/user-attachments/assets/fb8d8503-7eab-4c86-a882-1fd223c00b69" />
 
 ### THIS IS AN ALPHA RELEASE
-This is the first ALPHA build of likealinux :D
+This is the first ALPHA build of LikeALinux :D
 FINALLY AFTER SO LONG
 This build launches, and it has custom themes and optimizations made for gaming on ARM
 You can install it now!!
@@ -22,18 +22,18 @@ You can install it now!!
 13 = Debian version
 26 = Year
 
-This doesnt apply to this build because it is an alpha
+This doesn't apply to this build because it is an alpha
 
 ### Downloads
 Download the latest build from [GitHub Actions](https://github.com/pbk123461/LikeaLinux/actions/runs/30504419948) in the artifacts section.
 
 ### To Do
-- add arm steam and fexcore support
-- add waydroid support
+- add ARM Steam and fexcore support
+- add Waydroid support
 - add rpcs3 for arm
 - more optimizations
 
-NOTE: AI was only used for a few script which went unused anyway. So you dont have to worry about unstable software by AI
+NOTE: AI was only used for a few scripts which went unused anyway. So you don't have to worry about unstable software from AI
 
 ### Credits
 - Thank you https://github.com/sakibreza229/awesome-fastfetch for fastfetch theme
