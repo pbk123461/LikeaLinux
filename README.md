@@ -24,6 +24,9 @@ You can install it now!!
 
 This doesn't apply to this build because it is an alpha
 
+// This is a Stardance Hackclub Project, but I will continue to work on it.
+  https://stardance.hackclub.com/projects/18903
+  
 ### Downloads
 Download the latest build from [GitHub Actions](https://github.com/pbk123461/LikeaLinux/actions/runs/30504419948) in the artifacts section.
 
